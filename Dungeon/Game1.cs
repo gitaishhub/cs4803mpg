@@ -197,7 +197,7 @@ namespace Dungeon
         protected void InitPlayer()
         {
             Arnold = new Player(this);
-            Arnold.Position = new Vector3(0.0f, 16.0f, 0.0f);
+            Arnold.Position = new Vector3(0.0f, 35.0f, 0.0f);
             // The LookAtVec.XZ will be normalized for turning purposes
             Arnold.LookAtVec = new Vector3(0.0f, 0.0f, -1.0f);  // this is a vector for only X, Z component, 
                                                                 // Y will be accounted for when call Matrix.CreateLookAt()

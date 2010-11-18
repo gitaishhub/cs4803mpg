@@ -1,6 +1,7 @@
-float4x4 World;
-float4x4 View;
-float4x4 Projection;
+uniform extern float4x4 World;
+uniform extern float4x4 View;
+uniform extern float4x4 Projection;
+uniform extern float3 LightPosition;
 
 
 
@@ -36,7 +37,9 @@ struct VertexShaderInput
 
 struct VertexShaderOutput
 {
-    float4 Position : POSITION0;
+    float4 Position			: POSITION0;
+    float2 TexCoord			: TEXCOORD0;
+    float3 lightDirection	: TEXCOORD1;
 
     // TODO: add vertex shader outputs such as colors and texture
     // coordinates here. These values will automatically be interpolated
@@ -50,6 +53,8 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
     float4 worldPosition = mul(input.position, World);
     float4 viewPosition = mul(worldPosition, View);
     output.Position = mul(viewPosition, Projection);
+    output.TexCoord = input.texCoord;
+    output.lightDirection = LightPosition-input.position.xyz;
 
     // TODO: add your vertex shader code here.
 
