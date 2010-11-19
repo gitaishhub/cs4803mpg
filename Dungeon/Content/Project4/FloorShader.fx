@@ -1,17 +1,3 @@
-uniform extern float4x4 World;
-uniform extern float4x4 View;
-uniform extern float4x4 Projection;
-uniform extern float3 LightPosition;
-
-
-
-Texture Diffuse;
-Texture Normal;
-Texture Specular;
-sampler2D DiffuseSampler = sampler_state { texture = <Diffuse>; };
-sampler2D NormalSampler = sampler_state { texture = <Normal>; };
-sampler2D SpecularSampler = sampler_state { texture = <Specular>; };
-
 struct Light {
 	float4 Position;
 	float4 Direction;
@@ -26,49 +12,47 @@ struct Light {
 
 };
 
+uniform extern float4x4 World;
+uniform extern float4x4 WVP;
+uniform extern float3 Viewpoint;
+uniform extern Light Lights[4];
+uniform extern int NumLights;
+
+Texture Diffuse;
+Texture Normal;
+Texture Specular;
+sampler2D DiffuseSampler = sampler_state { texture = <Diffuse>; };
+sampler2D NormalSampler = sampler_state { texture = <Normal>; };
+sampler2D SpecularSampler = sampler_state { texture = <Specular>; };
+
 struct VertexShaderInput
 {
-    float4 position : POSITION0;
-    float2 texCoord : TEXCOORD0;
+    float4 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
 
-    // TODO: add input channels such as texture
-    // coordinates and vertex colors here.
 };
 
 struct VertexShaderOutput
 {
     float4 Position			: POSITION0;
+    float3 WorldPosition    : POSITION1;
     float2 TexCoord			: TEXCOORD0;
-    float3 lightDirection	: TEXCOORD1;
 
-    // TODO: add vertex shader outputs such as colors and texture
-    // coordinates here. These values will automatically be interpolated
-    // over the triangle, and provided as input to your pixel shader.
 };
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
     VertexShaderOutput output;
-
-    float4 worldPosition = mul(input.position, World);
-    float4 viewPosition = mul(worldPosition, View);
-    output.Position = mul(viewPosition, Projection);
-    output.TexCoord = input.texCoord;
-    output.lightDirection = LightPosition-input.position.xyz;
-
-    // TODO: add your vertex shader code here.
-
+    
+    output.Position = mul(input.Position, WVP);
+    output.WorldPosition = mul(input.Position, World);
+    output.TexCoord = input.TexCoord;
+    
     return output;
 }
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-    // TODO: add your pixel shader code here.
-
-    return float4(1, 0, 0, 1);
-    
-    
-    
     // Fetch and expand range-compressed normal
     //float3 normalTex = tex2D(normalMap, normalMapTexCoord).xyz;
     //float3 normal = expand(normalTex);
@@ -91,12 +75,12 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     //float specular8 = specular4*specular4;
 
     //color = LMd*(ambient+diffuse) + LMs*specular8;
-    
+    return tex2D(DiffuseSampler, input.TexCoord);
 }
 
-technique Technique1
+technique BumpMapped
 {
-    pass Pass1
+    pass Bump
     {
         // TODO: set renderstates here.
 

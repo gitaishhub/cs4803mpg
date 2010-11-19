@@ -50,6 +50,7 @@ namespace Dungeon.Furniture
         public Vector4 s_material;
 
         public Effect wallEffect;
+        public Effect floorEffect;
         public EffectTechnique renderingTech;
         public Matrix worldMatrix;
         public Matrix spinMatrix;
@@ -351,7 +352,7 @@ namespace Dungeon.Furniture
 
         public override void Draw(GameTime gameTime)
         {
-
+            #region Wall / Sky Drawing
             wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
             wallEffect.GraphicsDevice.VertexDeclaration = WallVertexDecl;
 
@@ -364,10 +365,10 @@ namespace Dungeon.Furniture
 
             wallEffect.Parameters["map"].SetValue(texture_brick); // will change inside the pass
             //wallEffect.Parameters["map2"].SetValue(texture_monalisa_spook);
-            wallEffect.Parameters["morphrate"].SetValue(morphrate);
-           
-            
-            wallEffect.Begin();           
+            //wallEffect.Parameters["morphrate"].SetValue(morphrate);
+
+
+            wallEffect.Begin();
             foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
             {
                 pass.Begin();
@@ -382,17 +383,17 @@ namespace Dungeon.Furniture
                                                     8);
 
                 // Change texture to stone picture
-                wallEffect.Parameters["map"].SetValue(this.flagstoneDiffuse);
-                wallEffect.CommitChanges();
+                //wallEffect.Parameters["map"].SetValue(this.flagstoneDiffuse);
+                //wallEffect.CommitChanges();
 
-                // drawing ground
-                wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-                                                    vertex,
-                                                    0,
-                                                    24,
-                                                    triangleListIndices,
-                                                    24,
-                                                    2);
+                //// drawing ground
+                //wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+                //                                    vertex,
+                //                                    0,
+                //                                    24,
+                //                                    triangleListIndices,
+                //                                    24,
+                //                                    2);
 
 
                 // Change texture to cosmo picture
@@ -504,6 +505,34 @@ namespace Dungeon.Furniture
             //    pass.End();
             //}
             //wallEffect.End();
+            #endregion
+
+            //wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
+            //wallEffect.GraphicsDevice.VertexDeclaration = WallVertexDecl;
+
+            //Vertices are the same, so we don't need to change the verteex declaration.
+
+            floorEffect.Parameters["World"].SetValue(WorldMatrix);
+            floorEffect.Parameters["WVP"].SetValue(this.gWVP);
+
+            floorEffect.Parameters["Diffuse"].SetValue(this.flagstoneDiffuse);
+            floorEffect.Parameters["Normal"].SetValue(this.flagstoneNormal);
+            floorEffect.Parameters["Specular"].SetValue(this.flagstoneSpecular);
+
+            floorEffect.CurrentTechnique = floorEffect.Techniques["BumpMapped"];
+            floorEffect.Begin();
+
+            foreach (EffectPass pass in this.floorEffect.CurrentTechnique.Passes)
+            {
+                floorEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+                                                        vertex,
+                                                        0,
+                                                        24,
+                                                        triangleListIndices,
+                                                        24,
+                                                        2);
+            }
+            floorEffect.End();
 
             base.Draw(gameTime);
         }
