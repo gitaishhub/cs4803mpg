@@ -66,43 +66,46 @@ namespace Dungeon.Furniture
             vertexcount = 44;
 
             WallVertexDecl = new VertexDeclaration(game.GraphicsDevice,
-                                                VertexPositionNormalTexture.VertexElements);        
-            
+                                                VertexPositionNormalTexture.VertexElements);
+
+            float width = 800f;
+            float depth = 800f;
+            float height = 200f;
             // Left 
-            vertex[0] = new VertexPositionNormalTexture(new Vector3(-200.0f, 200.0f, -200.0f), RightNormal, new Vector2(15.0f,  0.0f));
-            vertex[1] = new VertexPositionNormalTexture(new Vector3(-200.0f,   0.0f, -200.0f), RightNormal, new Vector2(15.0f, 15.0f));
-            vertex[2] = new VertexPositionNormalTexture(new Vector3(-200.0f,   0.0f,  200.0f), RightNormal, new Vector2( 0.0f, 15.0f));
-            vertex[3] = new VertexPositionNormalTexture(new Vector3(-200.0f, 200.0f,  200.0f), RightNormal, new Vector2( 0.0f,  0.0f));
+            vertex[0] = new VertexPositionNormalTexture(new Vector3(-width / 2, height, -depth / 2), RightNormal, new Vector2(15.0f, 0.0f));
+            vertex[1] = new VertexPositionNormalTexture(new Vector3(-width / 2, 0     , -depth / 2), RightNormal, new Vector2(15.0f, 15.0f));
+            vertex[2] = new VertexPositionNormalTexture(new Vector3(-width / 2, 0     ,  depth / 2), RightNormal, new Vector2(0.0f, 15.0f));
+            vertex[3] = new VertexPositionNormalTexture(new Vector3(-width / 2, height,  depth / 2), RightNormal, new Vector2(0.0f, 0.0f));
 
             // Near 
-            vertex[4] = new VertexPositionNormalTexture(new Vector3(-200.0f, 200.0f,  200.0f), BackNormal, new Vector2( 0.0f,  0.0f));
-            vertex[5] = new VertexPositionNormalTexture(new Vector3(-200.0f,   0.0f,  200.0f), BackNormal, new Vector2( 0.0f, 15.0f));
-            vertex[6] = new VertexPositionNormalTexture(new Vector3( 200.0f,   0.0f,  200.0f), BackNormal, new Vector2(15.0f, 15.0f));
-            vertex[7] = new VertexPositionNormalTexture(new Vector3( 200.0f, 200.0f,  200.0f), BackNormal, new Vector2(15.0f,  0.0f));
+            vertex[4] = new VertexPositionNormalTexture(new Vector3(-width, height, depth / 2), BackNormal, new Vector2(0.0f, 0.0f));
+            vertex[5] = new VertexPositionNormalTexture(new Vector3(-width, 0     , depth / 2), BackNormal, new Vector2(0.0f, 15.0f));
+            vertex[6] = new VertexPositionNormalTexture(new Vector3( width, 0     , depth / 2), BackNormal, new Vector2(15.0f, 15.0f));
+            vertex[7] = new VertexPositionNormalTexture(new Vector3( width, height, depth / 2), BackNormal, new Vector2(15.0f, 0.0f));
 
             // Right
-            vertex[8]  = new VertexPositionNormalTexture(new Vector3( 200.0f, 200.0f, 200.0f), LeftNormal, new Vector2(15.0f,  0.0f));
-            vertex[9]  = new VertexPositionNormalTexture(new Vector3( 200.0f, 0.0f,   200.0f), LeftNormal, new Vector2(15.0f, 15.0f));
-            vertex[10] = new VertexPositionNormalTexture(new Vector3( 200.0f, 0.0f,  -200.0f), LeftNormal, new Vector2( 0.0f, 15.0f));
-            vertex[11] = new VertexPositionNormalTexture(new Vector3( 200.0f, 200.0f,-200.0f), LeftNormal, new Vector2( 0.0f,  0.0f));
+            vertex[8]  = new VertexPositionNormalTexture(new Vector3(width / 2, height,  depth / 2), LeftNormal, new Vector2(15.0f, 0.0f));
+            vertex[9]  = new VertexPositionNormalTexture(new Vector3(width / 2, 0     ,  depth / 2), LeftNormal, new Vector2(15.0f, 15.0f));
+            vertex[10] = new VertexPositionNormalTexture(new Vector3(width / 2, 0     , -depth / 2), LeftNormal, new Vector2(0.0f, 15.0f));
+            vertex[11] = new VertexPositionNormalTexture(new Vector3(width / 2, height, -depth / 2), LeftNormal, new Vector2(0.0f, 0.0f));
 
             // Far
-            vertex[12] = new VertexPositionNormalTexture(new Vector3( 200.0f, 200.0f, -200.0f), FrontNormal, new Vector2(15.0f,  0.0f));
-            vertex[13] = new VertexPositionNormalTexture(new Vector3( 200.0f,   0.0f, -200.0f), FrontNormal, new Vector2(15.0f, 15.0f));
-            vertex[14] = new VertexPositionNormalTexture(new Vector3(-200.0f,   0.0f, -200.0f), FrontNormal, new Vector2( 0.0f, 15.0f));
-            vertex[15] = new VertexPositionNormalTexture(new Vector3(-200.0f, 200.0f, -200.0f), FrontNormal, new Vector2( 0.0f,  0.0f));
+            vertex[12] = new VertexPositionNormalTexture(new Vector3( width / 2, height, -depth / 2), FrontNormal, new Vector2(15.0f, 0.0f));
+            vertex[13] = new VertexPositionNormalTexture(new Vector3( width / 2, 0     , -depth / 2), FrontNormal, new Vector2(15.0f, 15.0f));
+            vertex[14] = new VertexPositionNormalTexture(new Vector3(-width / 2, 0     , -depth / 2), FrontNormal, new Vector2(0.0f, 15.0f));
+            vertex[15] = new VertexPositionNormalTexture(new Vector3(-width / 2, height, -depth / 2), FrontNormal, new Vector2(0.0f, 0.0f));
 
             // Ground
-            vertex[16] = new VertexPositionNormalTexture(new Vector3( 200.0f,   0.0f, -200.0f), TopNormal, new Vector2(10.0f,  0.0f));
-            vertex[17] = new VertexPositionNormalTexture(new Vector3( 200.0f,   0.0f,  200.0f), TopNormal, new Vector2(10.0f, 10.0f));
-            vertex[18] = new VertexPositionNormalTexture(new Vector3(-200.0f,   0.0f,  200.0f), TopNormal, new Vector2( 0.0f, 10.0f));
-            vertex[19] = new VertexPositionNormalTexture(new Vector3(-200.0f,   0.0f, -200.0f), TopNormal, new Vector2( 0.0f,  0.0f));
+            vertex[16] = new VertexPositionNormalTexture(new Vector3( width / 2, 0, -depth / 2), TopNormal, new Vector2(10.0f, 0.0f));
+            vertex[17] = new VertexPositionNormalTexture(new Vector3( width / 2, 0,  depth / 2), TopNormal, new Vector2(10.0f, 10.0f));
+            vertex[18] = new VertexPositionNormalTexture(new Vector3(-width / 2, 0,  depth / 2), TopNormal, new Vector2(0.0f, 10.0f));
+            vertex[19] = new VertexPositionNormalTexture(new Vector3(-width / 2, 0, -depth / 2), TopNormal, new Vector2(0.0f, 0.0f));
 
             // Sky
-            vertex[20] = new VertexPositionNormalTexture(new Vector3( 200.0f,  200.0f, -200.0f), BottomNormal, new Vector2(1.0f, 1.0f));
-            vertex[21] = new VertexPositionNormalTexture(new Vector3( 200.0f,  200.0f,  200.0f), BottomNormal, new Vector2(1.0f, 0.0f));
-            vertex[22] = new VertexPositionNormalTexture(new Vector3(-200.0f,  200.0f,  200.0f), BottomNormal, new Vector2(0.0f, 0.0f));
-            vertex[23] = new VertexPositionNormalTexture(new Vector3(-200.0f,  200.0f, -200.0f), BottomNormal, new Vector2(0.0f, 1.0f));
+            vertex[20] = new VertexPositionNormalTexture(new Vector3( width / 2, height, -depth / 2), BottomNormal, new Vector2(1.0f, 1.0f));
+            vertex[21] = new VertexPositionNormalTexture(new Vector3( width / 2, height,  depth / 2), BottomNormal, new Vector2(1.0f, 0.0f));
+            vertex[22] = new VertexPositionNormalTexture(new Vector3(-width / 2, height,  depth / 2), BottomNormal, new Vector2(0.0f, 0.0f));
+            vertex[23] = new VertexPositionNormalTexture(new Vector3(-width / 2, height, -depth / 2), BottomNormal, new Vector2(0.0f, 1.0f));
 
             // Glowing Mona Lisa
             vertex[24] = new VertexPositionNormalTexture(new Vector3(15.0f, 90.0f, -185.0f), FrontNormal, new Vector2(0.0f, 0.0f));
