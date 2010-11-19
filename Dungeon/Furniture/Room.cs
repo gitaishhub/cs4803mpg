@@ -514,16 +514,15 @@ namespace Dungeon.Furniture
 
             floorEffect.Parameters["World"].SetValue(WorldMatrix);
             floorEffect.Parameters["WVP"].SetValue(this.gWVP);
-
             floorEffect.Parameters["Diffuse"].SetValue(this.flagstoneDiffuse);
             floorEffect.Parameters["Normal"].SetValue(this.flagstoneNormal);
             floorEffect.Parameters["Specular"].SetValue(this.flagstoneSpecular);
-
             floorEffect.CurrentTechnique = floorEffect.Techniques["BumpMapped"];
-            floorEffect.Begin();
 
+            floorEffect.Begin();
             foreach (EffectPass pass in this.floorEffect.CurrentTechnique.Passes)
             {
+                pass.Begin();
                 floorEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
                                                         vertex,
                                                         0,
@@ -531,6 +530,7 @@ namespace Dungeon.Furniture
                                                         triangleListIndices,
                                                         24,
                                                         2);
+                pass.End();
             }
             floorEffect.End();
 
