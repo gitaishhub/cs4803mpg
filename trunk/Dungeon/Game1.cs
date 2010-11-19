@@ -250,6 +250,8 @@ namespace Dungeon
             masterRoom.WallEffect = Content.Load<Effect>("DungeonEffect");
             masterRoom.WallEffect.CurrentTechnique = masterRoom.WallEffect.Techniques["myTech"];
 
+            masterRoom.floorEffect = Content.Load<Effect>("Project4/FloorShader");
+
             //nugget[0].PyramidEffect = Content.Load<Effect>("DungeonEffect");
             //nugget[0].PyramidEffect.CurrentTechnique = nugget[0].PyramidEffect.Techniques["myTech"];
             //nugget[1].PyramidEffect = Content.Load<Effect>("DungeonEffect");
@@ -400,6 +402,24 @@ namespace Dungeon
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["attenuation"].SetValue(LiteSource[i].Attenuation);
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["is_pointLight"].SetValue(LiteSource[i].Is_PointLight);
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["lightDir"].SetValue(LiteSource[i].LightDirection);
+            }
+
+            //Set parameters for floor shader.
+            ObjEffect = masterRoom.floorEffect;
+            ObjEffect.Parameters["Viewpoint"].SetValue(Arnold.Position);
+            ObjEffect.Parameters["NumLights"].SetValue(masterRoom.NumOfLights);
+
+            for (i = 0; i < masterRoom.NumOfLights; i++)
+            {
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Position"].SetValue(LiteSource[i].Position);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["AmbientLight"].SetValue(LiteSource[i].Coefficient_ambient);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["DiffuseLight"].SetValue(LiteSource[i].Coefficient_diffuse);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["SpecLight"].SetValue(LiteSource[i].Coefficient_specular);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Shininess"].SetValue(LiteSource[i].Shininess);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["On"].SetValue(LiteSource[i].Is_on);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Attenuation"].SetValue(LiteSource[i].Attenuation);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Is_pointLight"].SetValue(LiteSource[i].Is_PointLight);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Direction"].SetValue(LiteSource[i].LightDirection);
             }
 
             base.Draw(gameTime);
