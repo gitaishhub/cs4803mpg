@@ -18,12 +18,12 @@ uniform extern float3 Viewpoint;
 uniform extern Light Lights[4];
 uniform extern int NumLights;
 
-Texture Diffuse;
-Texture Normal;
-Texture Specular;
-sampler2D DiffuseSampler = sampler_state { texture = <Diffuse>; };
-sampler2D NormalSampler = sampler_state { texture = <Normal>; };
-sampler2D SpecularSampler = sampler_state { texture = <Specular>; };
+uniform extern Texture Diffuse;
+uniform extern Texture Normal;
+uniform extern Texture Specular;
+uniform sampler2D DiffuseSampler = sampler_state { texture = <Diffuse>; };
+uniform sampler2D NormalSampler = sampler_state { texture = <Normal>; };
+uniform sampler2D SpecularSampler = sampler_state { texture = <Specular>; };
 
 struct VertexShaderInput
 {
@@ -38,6 +38,12 @@ struct VertexShaderOutput
     float3 WorldPosition    : POSITION1;
     float2 TexCoord			: TEXCOORD0;
 
+};
+
+struct LightOutput {
+	float4 Ambient;
+	float4 Diffuse;
+	float4 Specular;
 };
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
@@ -75,7 +81,45 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     //float specular8 = specular4*specular4;
 
     //color = LMd*(ambient+diffuse) + LMs*specular8;
-    return tex2D(DiffuseSampler, input.TexCoord);
+    
+    float3 normal = tex2D(NormalSampler, input.TexCoord);
+    normal = (normal - 0.5) / 2;
+    
+    LightOutput lightOutputs[4];
+    
+    for (int i = 0; i < NumLights; i++) {
+		lightOutputs[i].ambient = 0.0f;
+		lightOutputs[i].diffuse = 0.0f;
+		lightOutputs[i].spec = 0.0f;
+		attenuation = 1.0f;
+		
+		if (light[i].on != 0) {
+			lightOutputs[i].ambient = light[i].ambientLight * material.a_material;
+			
+			// trick to not use if-then to generate correct code on SM2.0
+			L =	normalize((0 - light[i].lightDir.xyz) * light[i].is_pointLight +
+							(light[i].position.xyz - TransP) * (1 - light[i].is_pointLight));
+			 
+
+								
+			intensity = max(dot(TransN, L), 0);
+			liteComponents[i].diffuse = material.d_material * light[i].diffuseLight * intensity;
+			
+			// specular effect for just the light specified specular is on
+			H = normalize(L+V);
+			spec_intensity = pow(max(dot(TransN, H), 0), light[i].shininess);
+			liteComponents[i].spec = material.s_material * light[i].specLight * spec_intensity;		
+			
+			dist  = distance(light[i].position.xyz, TransP);
+			atten = light[i].attenuation.x +  light[i].attenuation.y*dist + light[i].attenuation.y*dist*dist; 			
+		}
+		
+		output.Color = output.Color + liteComponents[i].ambient + ((liteComponents[i].diffuse + liteComponents[i].spec) / atten);
+		output.ColorDiff = output.ColorDiff + (liteComponents[i].diffuse / atten);
+    }
+    
+    float4 color = tex2D(DiffuseSampler, input.TexCoord);
+    return color;
 }
 
 technique BumpMapped
