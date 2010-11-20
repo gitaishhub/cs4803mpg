@@ -69,8 +69,8 @@ namespace Dungeon.Furniture
             WallVertexDecl = new VertexDeclaration(game.GraphicsDevice,
                                                 VertexPositionNormalTexture.VertexElements);
 
-            float width = 800f;
-            float depth = 800f;
+            float width = 400f;
+            float depth = 400f;
             float height = 200f;
             // Left 
             vertex[0] = new VertexPositionNormalTexture(new Vector3(-width / 2, height, -depth / 2), RightNormal, new Vector2(15.0f, 0.0f));
@@ -79,10 +79,10 @@ namespace Dungeon.Furniture
             vertex[3] = new VertexPositionNormalTexture(new Vector3(-width / 2, height,  depth / 2), RightNormal, new Vector2(0.0f, 0.0f));
 
             // Near 
-            vertex[4] = new VertexPositionNormalTexture(new Vector3(-width, height, depth / 2), BackNormal, new Vector2(0.0f, 0.0f));
-            vertex[5] = new VertexPositionNormalTexture(new Vector3(-width, 0     , depth / 2), BackNormal, new Vector2(0.0f, 15.0f));
-            vertex[6] = new VertexPositionNormalTexture(new Vector3( width, 0     , depth / 2), BackNormal, new Vector2(15.0f, 15.0f));
-            vertex[7] = new VertexPositionNormalTexture(new Vector3( width, height, depth / 2), BackNormal, new Vector2(15.0f, 0.0f));
+            vertex[4] = new VertexPositionNormalTexture(new Vector3(-width / 2, height, depth / 2), BackNormal, new Vector2(0.0f, 0.0f));
+            vertex[5] = new VertexPositionNormalTexture(new Vector3(-width / 2, 0     , depth / 2), BackNormal, new Vector2(0.0f, 15.0f));
+            vertex[6] = new VertexPositionNormalTexture(new Vector3( width / 2, 0     , depth / 2), BackNormal, new Vector2(15.0f, 15.0f));
+            vertex[7] = new VertexPositionNormalTexture(new Vector3( width / 2, height, depth / 2), BackNormal, new Vector2(15.0f, 0.0f));
 
             // Right
             vertex[8]  = new VertexPositionNormalTexture(new Vector3(width / 2, height,  depth / 2), LeftNormal, new Vector2(15.0f, 0.0f));
@@ -517,6 +517,10 @@ namespace Dungeon.Furniture
             floorEffect.Parameters["Diffuse"].SetValue(this.flagstoneDiffuse);
             floorEffect.Parameters["Normal"].SetValue(this.flagstoneNormal);
             floorEffect.Parameters["Specular"].SetValue(this.flagstoneSpecular);
+            floorEffect.Parameters["Material"].StructureMembers["Ambient"].SetValue(a_material);
+            floorEffect.Parameters["Material"].StructureMembers["Diffuse"].SetValue(d_material);
+            floorEffect.Parameters["Material"].StructureMembers["Specular"].SetValue(s_material);
+
             floorEffect.CurrentTechnique = floorEffect.Techniques["BumpMapped"];
 
             floorEffect.Begin();

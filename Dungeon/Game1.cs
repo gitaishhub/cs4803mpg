@@ -418,7 +418,7 @@ namespace Dungeon
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Shininess"].SetValue(LiteSource[i].Shininess);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["On"].SetValue(LiteSource[i].Is_on);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Attenuation"].SetValue(LiteSource[i].Attenuation);
-                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Is_pointLight"].SetValue(LiteSource[i].Is_PointLight);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["IsPointLight"].SetValue(LiteSource[i].Is_PointLight);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Direction"].SetValue(LiteSource[i].LightDirection);
             }
 
