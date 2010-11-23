@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioComponent.cs" />
+    <Compile Include="Enemy.cs" />
     <Compile Include="Weapons\Bullet.cs" />
     <Compile Include="Furniture\Pyramid.cs" />
     <Compile Include="Furniture\Teapot.cs" />
