@@ -35,6 +35,7 @@ namespace Dungeon
         private Cue backmusic;
 
         public Player Arnold;
+        public Enemy enemy;
         public Room masterRoom;
 
         public int numberdiffLights, numberspecLights;
@@ -204,6 +205,14 @@ namespace Dungeon
             Components.Add(Arnold);
         }
 
+        protected void InitEnemy()
+        {
+            this.enemy = new Enemy(this);
+            this.enemy.Position = new Vector3(0.0f, 35.0f, 0.0f);
+            
+            Components.Add(enemy);
+        }
+
         protected override void Initialize()
         {
 
@@ -214,6 +223,7 @@ namespace Dungeon
             // initialize the player
             // a better programming style would put player into one class
             InitPlayer();
+            InitEnemy();
 
             spin = new Vector3(0.0f, 0.0f, 0.0f);
 
@@ -251,6 +261,7 @@ namespace Dungeon
             masterRoom.WallEffect.CurrentTechnique = masterRoom.WallEffect.Techniques["myTech"];
 
             masterRoom.floorEffect = Content.Load<Effect>("Project4/FloorShader");
+            enemy.Effect = masterRoom.floorEffect;
 
             //nugget[0].PyramidEffect = Content.Load<Effect>("DungeonEffect");
             //nugget[0].PyramidEffect.CurrentTechnique = nugget[0].PyramidEffect.Techniques["myTech"];
@@ -371,10 +382,9 @@ namespace Dungeon
             //// place the teapot2
             //teapot[1].gWVP = teapot[1].WorldMatrix * viewMatrix * projectionMatrix;
 
-
+            
             base.Update(gameTime);
         }
-
      
         protected override void Draw(GameTime gameTime)
         {
