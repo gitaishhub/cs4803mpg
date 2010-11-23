@@ -25,10 +25,8 @@ using Microsoft.Xna.Framework.Storage;
 using Dungeon.Furniture;
 using Dungeon.Lights;
 
-namespace Dungeon
-{
-    public class Game1 : Microsoft.Xna.Framework.Game
-    {
+namespace Dungeon {
+    public class Game1 : Microsoft.Xna.Framework.Game {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         private AudioComponent audioComponent;
@@ -49,8 +47,11 @@ namespace Dungeon
         public Matrix projectionMatrix;
         private Vector3 spin;
 
-        public Game1()
-        {
+        private DepthStencilBuffer depthBuffer;
+        private RenderTarget2D motionTarget;
+        private Effect motionEffect;
+
+        public Game1() {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             graphics.PreferredBackBufferHeight = 800;
@@ -59,10 +60,8 @@ namespace Dungeon
         }
 
 
-        protected void SetupRoom()
-        {
-            if (masterRoom == null)
-            {
+        protected void SetupRoom() {
+            if (masterRoom == null) {
                 masterRoom = new Room(this);
                 Components.Add(masterRoom);
             }
@@ -70,14 +69,16 @@ namespace Dungeon
             masterRoom.Coefficient_D_Materials = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             masterRoom.Coefficient_S_Materials = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
             masterRoom.MorphRate = -0.5f;
-            masterRoom.WorldMatrix = Matrix.Identity;
             masterRoom.SpinMatrix = Matrix.Identity;
-            masterRoom.gWVP = masterRoom.WorldMatrix * viewMatrix * projectionMatrix;
             masterRoom.gSpinWVP = masterRoom.SpinMatrix * viewMatrix * projectionMatrix;
+
+            //Changed this to something more granular.
+            masterRoom.WorldMatrix = Matrix.Identity;
+            masterRoom.View = this.viewMatrix;
+            masterRoom.Projection = this.projectionMatrix;
         }
 
-        protected void InstallLights()
-        {
+        protected void InstallLights() {
 
             masterRoom.NumOfLights = 4;
             LiteSource = new AmbDiffSpecLights[4];
@@ -86,14 +87,14 @@ namespace Dungeon
             // Due to the room model is too simplified, the light will 
             // have pretty much similar effect on all pixls
             LiteSource[0] = new AmbDiffSpecLights(this);
-            LiteSource[0].Position = new Vector4(0.0f, 100.0f, 0.0f, 1.0f);
+            LiteSource[0].Position = new Vector4(0.0f, 32.0f, 0.0f, 1.0f);
             LiteSource[0].Coefficient_ambient = new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
-            LiteSource[0].Coefficient_diffuse = new Vector4(0.1f, 0.1f, 0.1f, 1.0f);
+            LiteSource[0].Coefficient_diffuse = new Vector4(0.7f, 0.7f, 0.7f, 1.0f);
             LiteSource[0].Coefficient_specular = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-            LiteSource[0].Shininess = 8.0f;
+            LiteSource[0].Shininess = 1.0f;
             LiteSource[0].Is_on = 1;
-            LiteSource[0].Is_PointLight = 0;
-            LiteSource[0].LightDirection = new Vector4(0.0f, 0.0f, 0.0f, 0.0f); // will not be used if it is not a point light
+            LiteSource[0].Is_PointLight = 1;
+            LiteSource[0].LightDirection = new Vector4(0.0f, 0.0f, 0.0f, 0.0f); // Not used if this is a point light.
             LiteSource[0].Attenuation = new Vector4(1.0f, 0.000005f, 0.0f, 0.0f); // no attenuation
 
             // Set up a point light source
@@ -104,9 +105,9 @@ namespace Dungeon
             LiteSource[1].Coefficient_diffuse = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
             LiteSource[1].Coefficient_specular = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
             LiteSource[1].Shininess = 4.0f;
-            LiteSource[1].Is_on = 1;
+            LiteSource[1].Is_on = 0;
             LiteSource[1].Is_PointLight = 1;
-            LiteSource[1].LightDirection = new Vector4(-180.0f, 100.0f, -180.0f, 0.0f); // will not be used if it is not a point light
+            LiteSource[1].LightDirection = new Vector4(-180.0f, 100.0f, -180.0f, 0.0f); // Not used if this is a point light.
             LiteSource[1].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
 
             // Set up a second point light source
@@ -117,9 +118,9 @@ namespace Dungeon
             LiteSource[2].Coefficient_diffuse = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
             LiteSource[2].Coefficient_specular = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[2].Shininess = 8.0f;
-            LiteSource[2].Is_on = 1;
+            LiteSource[2].Is_on = 0;
             LiteSource[2].Is_PointLight = 1;
-            LiteSource[2].LightDirection = new Vector4(1.0f, 0.0f, 1.0f, 0.0f); // will not be used if it is not a point light
+            LiteSource[2].LightDirection = new Vector4(1.0f, 0.0f, 1.0f, 0.0f); // Not used if this is a point light.
             LiteSource[2].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
 
 
@@ -131,20 +132,18 @@ namespace Dungeon
             LiteSource[3].Coefficient_diffuse = new Vector4(0.3f, 0.3f, 1.0f, 1.0f);
             LiteSource[3].Coefficient_specular = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[3].Shininess = 8.0f;
-            LiteSource[3].Is_on = 1;
+            LiteSource[3].Is_on = 0;
             LiteSource[3].Is_PointLight = 1;
-            LiteSource[3].LightDirection = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+            LiteSource[3].LightDirection = new Vector4(0.0f, 0.0f, 1.0f, 0.0f); // Not used if this is a point light.
             LiteSource[3].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
 
-            for (int i = 0; i < masterRoom.NumOfLights; i++)
-            {
+            for (int i = 0; i < masterRoom.NumOfLights; i++) {
                 Components.Add(LiteSource[i]);
             }
         }
 
-        protected void InstallFurniture()
-        {
-            
+        protected void InstallFurniture() {
+
             //nugget = new Pyramid[2];
 
             //nugget[0] = new Pyramid(this);
@@ -167,7 +166,7 @@ namespace Dungeon
 
             //Components.Add(nugget[0]);
             //Components.Add(nugget[1]);
-            
+
             //teapot = new Teapot[2];
 
             //teapot[0] = new Teapot(this);
@@ -195,26 +194,23 @@ namespace Dungeon
 
         }
 
-        protected void InitPlayer()
-        {
+        protected void InitPlayer() {
             Arnold = new Player(this);
             Arnold.Position = new Vector3(0.0f, 35.0f, 0.0f);
             // The LookAtVec.XZ will be normalized for turning purposes
             Arnold.LookAtVec = new Vector3(0.0f, 0.0f, -1.0f);  // this is a vector for only X, Z component, 
-                                                                // Y will be accounted for when call Matrix.CreateLookAt()
+            // Y will be accounted for when call Matrix.CreateLookAt()
             Components.Add(Arnold);
         }
 
         protected void InitEnemy()
         {
             this.enemy = new Enemy(this);
-            this.enemy.Position = new Vector3(0.0f, 35.0f, 0.0f);
             
             Components.Add(enemy);
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
 
             // Audio
             audioComponent = new AudioComponent(this);
@@ -236,8 +232,11 @@ namespace Dungeon
             Arnold.ViewMatrix = viewMatrix;
             Arnold.ProjectionMatrix = projectionMatrix;
 
+            this.enemy.ViewMatrix = viewMatrix;
+            this.enemy.ProjectionMatrix = projectionMatrix;
+
             // initialize the room
-            SetupRoom(); 
+            SetupRoom();
 
             // Add lights
             InstallLights();
@@ -252,91 +251,71 @@ namespace Dungeon
 
         }
 
-        protected override void LoadContent()
-        {
+        protected override void LoadContent() {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             masterRoom.WallEffect = Content.Load<Effect>("DungeonEffect");
             masterRoom.WallEffect.CurrentTechnique = masterRoom.WallEffect.Techniques["myTech"];
 
-            masterRoom.floorEffect = Content.Load<Effect>("Project4/FloorShader");
-            enemy.Effect = masterRoom.floorEffect;
+            masterRoom.p4Effect = Content.Load<Effect>("Project4/P4Shader");
+            enemy.Effect = masterRoom.p4Effect;
 
             //nugget[0].PyramidEffect = Content.Load<Effect>("DungeonEffect");
             //nugget[0].PyramidEffect.CurrentTechnique = nugget[0].PyramidEffect.Techniques["myTech"];
             //nugget[1].PyramidEffect = Content.Load<Effect>("DungeonEffect");
             //nugget[1].PyramidEffect.CurrentTechnique = nugget[1].PyramidEffect.Techniques["myTech"];
-            
+
             //teapot[0].TeapotEffect = Content.Load<Effect>("DungeonEffect");
             //teapot[0].TeapotEffect.CurrentTechnique = teapot[0].TeapotEffect.Techniques["myTech"];
             //teapot[1].TeapotEffect = Content.Load<Effect>("DungeonEffect");
             //teapot[1].TeapotEffect.CurrentTechnique = teapot[1].TeapotEffect.Techniques["myTech"];
+
+            this.motionTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
+
         }
 
-        
-        protected override void UnloadContent()
-        {
+        protected override void UnloadContent() {
             // TODO: Unload any non ContentManager content here
         }
 
 
-        protected void LightSwitch()
-        {
+        protected void LightSwitch() {
             KeyboardState keyboard = Keyboard.GetState();
 
-            if (keyboard.IsKeyDown(Keys.F1) != oldState.IsKeyDown(Keys.F1))
-            {
-                if (keyboard.IsKeyDown(Keys.F1))
-                {
+            if (keyboard.IsKeyDown(Keys.F1) != oldState.IsKeyDown(Keys.F1)) {
+                if (keyboard.IsKeyDown(Keys.F1)) {
                     // key F1 is pressed
                     // turn off Light 0
                     LiteSource[0].Flipped();
-                }
-                else
-                {
+                } else {
                     // key F1 is released
                 }
                 oldState = keyboard;
-            }
-            else if (keyboard.IsKeyDown(Keys.F2) != oldState.IsKeyDown(Keys.F2))
-            {
-                if (keyboard.IsKeyDown(Keys.F2))
-                {
+            } else if (keyboard.IsKeyDown(Keys.F2) != oldState.IsKeyDown(Keys.F2)) {
+                if (keyboard.IsKeyDown(Keys.F2)) {
                     // key F2 is pressed
                     // turn off Light 1
                     LiteSource[1].Flipped();
-                }
-                else
-                {
+                } else {
                     // key F2 is released
                 }
                 oldState = keyboard;
-            }
-            else if (keyboard.IsKeyDown(Keys.F3) != oldState.IsKeyDown(Keys.F3))
-            {
-                if (keyboard.IsKeyDown(Keys.F3))
-                {
+            } else if (keyboard.IsKeyDown(Keys.F3) != oldState.IsKeyDown(Keys.F3)) {
+                if (keyboard.IsKeyDown(Keys.F3)) {
                     // key F3 is pressed
                     // turn off Light 2
                     LiteSource[2].Flipped();
-                }
-                else
-                {
+                } else {
                     // key F3 is released
                 }
                 oldState = keyboard;
-            }
-            else if (keyboard.IsKeyDown(Keys.F4) != oldState.IsKeyDown(Keys.F4))
-            {
-                if (keyboard.IsKeyDown(Keys.F4))
-                {
+            } else if (keyboard.IsKeyDown(Keys.F4) != oldState.IsKeyDown(Keys.F4)) {
+                if (keyboard.IsKeyDown(Keys.F4)) {
                     // key F4 is pressed
                     // turn off Light 3
                     LiteSource[3].Flipped();
-                }
-                else
-                {
+                } else {
                     // key F4 is released
                 }
                 oldState = keyboard;
@@ -344,8 +323,7 @@ namespace Dungeon
         }
 
 
-        protected override void Update(GameTime gameTime)
-        {
+        protected override void Update(GameTime gameTime) {
             Vector3 offset = new Vector3(0.0f, 0.005f, 0.0f);
 
             KeyboardState keyboard = Keyboard.GetState();
@@ -363,19 +341,23 @@ namespace Dungeon
 
             viewMatrix = Matrix.CreateLookAt(Arnold.Position, (Arnold.Position + Arnold.LookAtVec), Vector3.Up);
             Arnold.ViewMatrix = viewMatrix;
+            enemy.ViewMatrix = viewMatrix;
 
-            masterRoom.gWVP = masterRoom.WorldMatrix * viewMatrix * projectionMatrix;
+            //Again, I wanted this more granular.
+            masterRoom.WorldMatrix = Matrix.Identity;
+            masterRoom.View = this.viewMatrix;
+            masterRoom.Projection = this.projectionMatrix;
 
             // create a spinning matrix
             // This is not a good programming style, try to avoid in the future
             spin = spin + offset;
             masterRoom.SpinMatrix = Matrix.CreateRotationY(spin.Y) * Matrix.CreateTranslation(new Vector3(195, 53, 0)); // rotate around Y
-            masterRoom.gSpinWVP = masterRoom.SpinMatrix* viewMatrix * projectionMatrix; // this does not appear to be a good programming style, better done inside the Room class
+            masterRoom.gSpinWVP = masterRoom.SpinMatrix * viewMatrix * projectionMatrix; // this does not appear to be a good programming style, better done inside the Room class
 
             //// place the pyramid
             //nugget[0].gWVP = nugget[0].WorldMatrix * viewMatrix * projectionMatrix;
             //nugget[1].gWVP = nugget[1].WorldMatrix * viewMatrix * projectionMatrix;
-            
+
             //// place the teapot
             //teapot[0].gWVP = teapot[0].WorldMatrix * viewMatrix * projectionMatrix;
 
@@ -385,24 +367,25 @@ namespace Dungeon
             
             base.Update(gameTime);
         }
-     
-        protected override void Draw(GameTime gameTime)
-        {
+
+        protected override void Draw(GameTime gameTime) {
             int i;
             Effect ObjEffect;
 
-            graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
+
+            //Set render target.
+            this.GraphicsDevice.SetRenderTarget(0, this.motionTarget);
+
+            graphics.GraphicsDevice.Clear(Color.Black);
             ObjEffect = masterRoom.WallEffect;
-            
 
             // maybe bad programming planning 
             ObjEffect.Parameters["eyePosition"].SetValue(Arnold.Position);
             ObjEffect.Parameters["numLights"].SetValue(masterRoom.NumOfLights);
 
             // set up lights in shader code
-            for (i = 0; i < masterRoom.NumOfLights; i++)
-            {
+            for (i = 0; i < masterRoom.NumOfLights; i++) {
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["position"].SetValue(LiteSource[i].Position);
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["ambientLight"].SetValue(LiteSource[i].Coefficient_ambient);
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["diffuseLight"].SetValue(LiteSource[i].Coefficient_diffuse);
@@ -415,12 +398,11 @@ namespace Dungeon
             }
 
             //Set parameters for floor shader.
-            ObjEffect = masterRoom.floorEffect;
+            ObjEffect = masterRoom.p4Effect;
             ObjEffect.Parameters["Viewpoint"].SetValue(Arnold.Position);
             ObjEffect.Parameters["NumLights"].SetValue(masterRoom.NumOfLights);
 
-            for (i = 0; i < masterRoom.NumOfLights; i++)
-            {
+            for (i = 0; i < masterRoom.NumOfLights; i++) {
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Position"].SetValue(LiteSource[i].Position);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["AmbientLight"].SetValue(LiteSource[i].Coefficient_ambient);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["DiffuseLight"].SetValue(LiteSource[i].Coefficient_diffuse);
@@ -433,6 +415,13 @@ namespace Dungeon
             }
 
             base.Draw(gameTime);
+
+            //Reset render target.
+            this.GraphicsDevice.SetRenderTarget(0, null);
+
+            this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+            this.spriteBatch.Draw(this.motionTarget.GetTexture(), Vector2.Zero, Color.White);
+            this.spriteBatch.End();
         }
     }
 }

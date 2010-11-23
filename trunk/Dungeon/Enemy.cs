@@ -24,12 +24,9 @@ namespace Dungeon
         private Model model;
         public Effect Effect { get; set; }
 
-        public Enemy(Game game)
-            : base(game)
+        public Enemy(Game game) : base(game)
         {
-            //gameP = game;
-
-            //this.Position = 4 * Vector3.Backward;
+            this.world = Matrix.CreateScale(64) * Matrix.CreateTranslation(new Vector3(0, 32, -128));
         }
 
         public Matrix WorldMatrix
@@ -102,13 +99,16 @@ namespace Dungeon
 
         public override void Draw(GameTime gameTime)
         {
+            Matrix[] transforms = new Matrix[this.model.Bones.Count];
+            this.model.CopyAbsoluteBoneTransformsTo(transforms);
+
             foreach (ModelMesh mesh in this.model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
                     effect.Projection = this.ProjectionMatrix;
                     effect.View = this.ViewMatrix;
-                    effect.World = this.WorldMatrix;
+                    effect.World = transforms[mesh.ParentBone.Index] * this.world;
 
                     effect.EnableDefaultLighting();
                 }

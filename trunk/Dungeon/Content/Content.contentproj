@@ -152,15 +152,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Project4\FloorShader.fx">
-      <Name>FloorShader</Name>
-      <Importer>EffectImporter</Importer>
-      <Processor>EffectProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Project4\Terrain.fx">
-      <Name>Terrain</Name>
+    <Compile Include="Project4\P4Shader.fx">
+      <Name>P4Shader</Name>
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
     </Compile>
