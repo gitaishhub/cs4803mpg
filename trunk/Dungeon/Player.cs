@@ -34,6 +34,7 @@ namespace Dungeon
         public float radius;
         public float move, updown;
         public Vector3 walk;
+        private Random rng;
 
         public Game gameP;
         private Bullet bullet;
@@ -47,6 +48,7 @@ namespace Dungeon
             : base(game)
         {
             gameP = game;
+            this.rng = new Random();
             audioComponent = new AudioComponent(game);
             game.Components.Add(audioComponent);
         }
@@ -117,17 +119,31 @@ namespace Dungeon
 
             bullet.BulletEffect = gameP.Content.Load<Effect>("DungeonEffect");
             bullet.BulletEffect.CurrentTechnique = bullet.BulletEffect.Techniques["myTech"];
-            gameP.Components.Add(bullet);
-
-            
+            gameP.Components.Add(bullet);            
         }
+
+        //public void checkBulletCollision()
+        //{
+        //    //Check to see if bullets have hit the enemy.
+        //    //Kill it, and respawn.
+        //    bool hit = false;
+        //    BoundingSphere[] bounds = ((Game1)this.Game).enemy.Bounds;
+        //    foreach (BoundingSphere sphere in bounds)
+        //    {
+        //        hit |= bullet.Bounds.Intersects(sphere);
+        //    }
+        //    if (hit)
+        //    {
+        //        Console.Out.WriteLine("Trex dead");
+        //    } 
+        //}
 
         public void Move()
         {
             KeyboardState keyboard = Keyboard.GetState();
             Vector3 tmpcam = new Vector3(0.0f, 0.0f, 0.0f);
             Vector3 new_position;
-
+            float speed = 3;
 
             if (keyboard.IsKeyDown(Keys.Space) != oldState.IsKeyDown(Keys.Space))
             {
@@ -137,17 +153,17 @@ namespace Dungeon
                 }
                 oldState = keyboard;
             }
-            else if (keyboard.IsKeyDown(Keys.Left))
+            else if (keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.A))
             {
-                move -= 0.01f;
+                move -= 0.05f;
                 // note that these 2 components are normalized
                 // so the outcome of this will be normalized too
                 lookAtVec.X = lookAtVec.X * (float)Math.Cos(move) - lookAtVec.Z * (float)Math.Sin(move);
                 lookAtVec.Z = lookAtVec.X * (float)Math.Sin(move) + lookAtVec.Z * (float)Math.Cos(move);
             }
-            else if (keyboard.IsKeyDown(Keys.Right))
+            else if (keyboard.IsKeyDown(Keys.Right) || keyboard.IsKeyDown(Keys.D))
             {
-                move += 0.01f;
+                move += 0.05f;
                 lookAtVec.X = lookAtVec.X * (float)Math.Cos(move) - lookAtVec.Z * (float)Math.Sin(move);
                 lookAtVec.Z = lookAtVec.X * (float)Math.Sin(move) + lookAtVec.Z * (float)Math.Cos(move);
             }
@@ -163,12 +179,12 @@ namespace Dungeon
             {
                 lookAtVec.Y -= (float)Math.Sin(updown);
             }
-            else if (keyboard.IsKeyDown(Keys.Up))
+            else if (keyboard.IsKeyDown(Keys.Up) || keyboard.IsKeyDown(Keys.W))
             {
                 // walk forward
 
-                new_position.X = position.X + lookAtVec.X; // *0.5f;
-                new_position.Z = position.Z + lookAtVec.Z; // *0.5f;
+                new_position.X = position.X + speed * lookAtVec.X; //*0.5f;
+                new_position.Z = position.Z + speed * lookAtVec.Z; //*0.5f;
 
                 if (wall_collision(new_position.X))
                 {
@@ -201,16 +217,94 @@ namespace Dungeon
                     }
                 }
             }
-            else if (keyboard.IsKeyDown(Keys.Down))
+            else if (keyboard.IsKeyDown(Keys.Down) || keyboard.IsKeyDown(Keys.S))
             {
                 // walk backward
 
-                new_position.X = position.X - lookAtVec.X; // *0.5f;
-                new_position.Z = position.Z - lookAtVec.Z; // *0.5f;
+                new_position.X = position.X - speed * lookAtVec.X; // *0.5f;
+                new_position.Z = position.Z - speed * lookAtVec.Z; // *0.5f;
 
                 if (wall_collision(new_position.X))
                 {
                     // X has collided
+                    if (wall_collision(new_position.Z))
+                    {
+                        // both exceed
+                        return;
+                    }
+                    else
+                    {
+                        // Z is ok
+                        position.Z = new_position.Z;
+
+                    }
+                }
+                else
+                {
+                    // X is ok
+                    if (wall_collision(new_position.Z))
+                    {
+                        position.X = new_position.X;
+
+                        return;
+                    }
+                    else
+                    {
+                        position.X = new_position.X;
+                        position.Z = new_position.Z;
+
+                    }
+                }
+            }
+            else if (keyboard.IsKeyDown(Keys.Q))
+            {
+                // strafe left
+                Vector3 left = new Vector3(lookAtVec.Z, 0, -lookAtVec.X);
+
+                new_position.X = position.X + speed * left.X; //*0.5f;
+                new_position.Z = position.Z + speed * left.Z; //*0.5f;
+
+                if (wall_collision(new_position.X))
+                {
+                    if (wall_collision(new_position.Z))
+                    {
+                        // both exceed
+                        return;
+                    }
+                    else
+                    {
+                        // Z is ok
+                        position.Z = new_position.Z;
+
+                    }
+                }
+                else
+                {
+                    // X is ok
+                    if (wall_collision(new_position.Z))
+                    {
+                        position.X = new_position.X;
+
+                        return;
+                    }
+                    else
+                    {
+                        position.X = new_position.X;
+                        position.Z = new_position.Z;
+
+                    }
+                }
+            }
+            else if (keyboard.IsKeyDown(Keys.E))
+            {
+                // strafe left
+                Vector3 right = new Vector3(-lookAtVec.Z, 0, lookAtVec.X);
+
+                new_position.X = position.X + speed * right.X; //*0.5f;
+                new_position.Z = position.Z + speed * right.Z; //*0.5f;
+
+                if (wall_collision(new_position.X))
+                {
                     if (wall_collision(new_position.Z))
                     {
                         // both exceed
@@ -276,9 +370,19 @@ namespace Dungeon
             }
         }
 
+        public BoundingSphere Bounds
+        {
+            get
+            {
+                BoundingSphere bounds = new BoundingSphere(position,radius);
+
+               return bounds;
+            }
+        }
+
         public override void Initialize()
         {
-            radius = 200.0f;
+            radius = 15.0f;
             move   = 0.0f;
             updown = 0.02f;
             
@@ -295,7 +399,9 @@ namespace Dungeon
             {
                 if (gameP.Components[i] is Bullet)
                 {
-                    cur_pos = ((Bullet)(gameP.Components[i])).Position;
+                    bullet = (Bullet)gameP.Components[i];
+                    cur_pos = bullet.Position;
+                    //cur_pos = ((Bullet)(gameP.Components[i])).Position;
                     // means outstanding bullet in the room
                     if (wall_collision(cur_pos.X) || wall_collision(cur_pos.Y) || wall_collision(cur_pos.X))
                     {
@@ -310,9 +416,31 @@ namespace Dungeon
                     }
                 }
             }
-
             
+            //Check to see if dinosaur has eaten me.
+            bool hit = false;
+            BoundingSphere[] bounds = ((Game1)this.Game).enemy.Bounds;
+            foreach (BoundingSphere sphere in bounds)
+            {
+                hit |= this.Bounds.Intersects(sphere);
+            }
+            if (hit)
+            {
+                //Get an x and z at a safe distance from enemy.
+                Vector3 enemyPosition = (this.Game as Game1).enemy.Position;
+                Vector3 newPosition = Vector3.Zero;
+                do
+                {
+                    newPosition.X = 200 * (float)this.rng.NextDouble();
+                    newPosition.Z = 200 * (float)this.rng.NextDouble();
 
+                } while (Vector3.DistanceSquared(enemyPosition, newPosition) < 2500);
+
+                float x = 200 * (float)this.rng.NextDouble();
+                float z = 200 * (float)this.rng.NextDouble();
+                this.Position = new Vector3(x, this.Position.Y, z);
+                Console.WriteLine("You Died!");
+            }
 
             base.Update(gameTime);
         }

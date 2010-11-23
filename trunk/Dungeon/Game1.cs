@@ -272,6 +272,7 @@ namespace Dungeon {
             //teapot[1].TeapotEffect.CurrentTechnique = teapot[1].TeapotEffect.Techniques["myTech"];
 
             this.motionTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
+            //this.depthBuffer = new DepthStencilBuffer(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, DepthFormat.Depth32);
 
         }
 
@@ -373,7 +374,7 @@ namespace Dungeon {
             Effect ObjEffect;
 
 
-
+            GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
             //Set render target.
             this.GraphicsDevice.SetRenderTarget(0, this.motionTarget);
 
