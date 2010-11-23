@@ -49,6 +49,7 @@ namespace Dungeon.Weapons
         private Matrix projectionMatrix;
 
         private Vector3 position;
+        private float radius;
         private Vector3 trajectory;
 
         public Effect bulletEffect;
@@ -144,6 +145,16 @@ namespace Dungeon.Weapons
             }
         }
 
+        public BoundingSphere Bounds
+        {
+            get
+            {
+                BoundingSphere bounds = new BoundingSphere(position, radius);
+
+                return bounds;
+            }
+        }
+
         public Matrix WorldMatrix
         {
             get
@@ -220,7 +231,7 @@ namespace Dungeon.Weapons
 
         public override void Initialize()
         {
-            
+            radius = 10;
 
             base.Initialize();
         }
