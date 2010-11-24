@@ -20,10 +20,18 @@ uniform extern float4x4 World;
 uniform extern float4x4 View;
 uniform extern float4x4 Projection;
 uniform extern float3 Viewpoint;
+uniform extern float4x4 VPInverse;
+uniform extern float4x4 previousVPInverse;
+uniform extern int numSamples;
 
 uniform extern Light Lights[4];
 uniform extern int NumLights;
 uniform extern MaterialProperty Material;
+
+uniform extern Texture DepthTexture;
+uniform extern Texture SceneTexture;
+uniform sampler2D SceneSampler = sampler_state { texture = <SceneTexture>; mipfilter = linear; };
+uniform sampler2D DepthSampler = sampler_state { texture = <DepthTexture>; mipfilter = linear; };
 
 uniform extern Texture Diffuse;
 uniform extern Texture Normal;
@@ -110,6 +118,33 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     return color * lightColor;
 }
 
+float4 MotionBlurPixel(VertexShaderOutput input) : COLOR0
+{
+	//Get depth buffer value at pixel.
+	float4 depth = tex2D(DepthSampler, input.TexCoord);
+	float zOverW = depth.z / depth.w;
+	//Calculate viewport position at pixel -1 to 1.
+	float4 view = float4(input.TexCoord.x * 2 - 1, (1 - input.TexCoord.y) * 2 - 1, zOverW, 1);
+	//Tranform by view-proj inverse.
+	float4 trans = mul(view, VPInverse);
+	//Divide by w to get world position.
+	float4 worldPos = trans / trans.w;
+	
+	float4 currentPos = view;
+	float4 previousPos = mul(worldPos, previousVPInverse);
+	previousPos /= previousPos.w;
+	float2 velocity = (currentPos - previousPos)/2.0f;
+	
+	//get initial color of pixel
+	float4 color = float4(0, 0, 0, 0);
+	for(int i = 0; i < numSamples; i++)
+	{
+		color += tex2D(SceneSampler, input.TexCoord);
+		input.TexCoord += velocity;
+	}
+	return color / numSamples;	
+}
+
 technique BumpMapped
 {
     pass Bump
@@ -118,5 +153,16 @@ technique BumpMapped
 
         VertexShader = compile vs_3_0 VertexShaderFunction();
         PixelShader = compile ps_3_0 PixelShaderFunction();
+    }
+}
+
+technique MotionBlur
+{
+    pass Motion
+    {
+        // TODO: set renderstates here.
+
+        VertexShader = compile vs_3_0 VertexShaderFunction();
+        PixelShader = compile ps_3_0 MotionBlurPixel();
     }
 }
