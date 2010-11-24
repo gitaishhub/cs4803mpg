@@ -45,11 +45,11 @@ namespace Dungeon {
 
         public Matrix viewMatrix;
         public Matrix projectionMatrix;
+        public Matrix lightProjectionMatrix;
         private Vector3 spin;
 
-        private DepthStencilBuffer depthBuffer;
         private RenderTarget2D motionTarget;
-        private Effect motionEffect;
+        public Effect P4Effect { get; set; }
 
         public Game1() {
             graphics = new GraphicsDeviceManager(this);
@@ -86,8 +86,8 @@ namespace Dungeon {
             // Set up a diffuse/specular light source
             // Due to the room model is too simplified, the light will 
             // have pretty much similar effect on all pixls
-            LiteSource[0] = new AmbDiffSpecLights(this);
-            LiteSource[0].Position = new Vector4(0.0f, 32.0f, 0.0f, 1.0f);
+            LiteSource[0] = new AmbDiffSpecLights(this, 256);
+            LiteSource[0].Position = new Vector4(0.0f, 128f, 0.0f, 1.0f);
             LiteSource[0].Coefficient_ambient = new Vector4(0.2f, 0.2f, 0.2f, 1.0f);
             LiteSource[0].Coefficient_diffuse = new Vector4(0.7f, 0.7f, 0.7f, 1.0f);
             LiteSource[0].Coefficient_specular = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -99,7 +99,7 @@ namespace Dungeon {
 
             // Set up a point light source
 
-            LiteSource[1] = new AmbDiffSpecLights(this);
+            LiteSource[1] = new AmbDiffSpecLights(this, 256);
             LiteSource[1].Position = new Vector4(-180.0f, 20.0f, -180.0f, 1.0f);
             LiteSource[1].Coefficient_ambient = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[1].Coefficient_diffuse = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
@@ -112,7 +112,7 @@ namespace Dungeon {
 
             // Set up a second point light source
 
-            LiteSource[2] = new AmbDiffSpecLights(this);
+            LiteSource[2] = new AmbDiffSpecLights(this, 256);
             LiteSource[2].Position = new Vector4(180.0f, 180.0f, 180.0f, 1.0f);
             LiteSource[2].Coefficient_ambient = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[2].Coefficient_diffuse = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -123,10 +123,9 @@ namespace Dungeon {
             LiteSource[2].LightDirection = new Vector4(1.0f, 0.0f, 1.0f, 0.0f); // Not used if this is a point light.
             LiteSource[2].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
 
-
             // Set up a third point light source
 
-            LiteSource[3] = new AmbDiffSpecLights(this);
+            LiteSource[3] = new AmbDiffSpecLights(this, 256);
             LiteSource[3].Position = new Vector4(0.0f, 60.0f, 170.0f, 1.0f);
             LiteSource[3].Coefficient_ambient = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[3].Coefficient_diffuse = new Vector4(0.3f, 0.3f, 1.0f, 1.0f);
@@ -203,10 +202,9 @@ namespace Dungeon {
             Components.Add(Arnold);
         }
 
-        protected void InitEnemy()
-        {
+        protected void InitEnemy() {
             this.enemy = new Enemy(this);
-            
+
             Components.Add(enemy);
         }
 
@@ -229,9 +227,15 @@ namespace Dungeon {
                     (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height,
                     0.1f, 5000.0f);
 
+            //Setup the view matrix for shadow mapping.
+            this.lightProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1, 0.1f, 1024f);
+
+
             Arnold.ViewMatrix = viewMatrix;
             Arnold.ProjectionMatrix = projectionMatrix;
 
+            //This should be done in LoadContent(), but the enemy needs it now-ish so I'm just moving it here.
+            this.P4Effect = Content.Load<Effect>("Project4/P4Shader");
             this.enemy.ViewMatrix = viewMatrix;
             this.enemy.ProjectionMatrix = projectionMatrix;
 
@@ -258,9 +262,6 @@ namespace Dungeon {
             masterRoom.WallEffect = Content.Load<Effect>("DungeonEffect");
             masterRoom.WallEffect.CurrentTechnique = masterRoom.WallEffect.Techniques["myTech"];
 
-            masterRoom.p4Effect = Content.Load<Effect>("Project4/P4Shader");
-            enemy.Effect = masterRoom.p4Effect;
-
             //nugget[0].PyramidEffect = Content.Load<Effect>("DungeonEffect");
             //nugget[0].PyramidEffect.CurrentTechnique = nugget[0].PyramidEffect.Techniques["myTech"];
             //nugget[1].PyramidEffect = Content.Load<Effect>("DungeonEffect");
@@ -274,6 +275,7 @@ namespace Dungeon {
             this.motionTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
             //this.depthBuffer = new DepthStencilBuffer(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, DepthFormat.Depth32);
 
+            base.LoadContent();
         }
 
         protected override void UnloadContent() {
@@ -365,28 +367,118 @@ namespace Dungeon {
             //// place the teapot2
             //teapot[1].gWVP = teapot[1].WorldMatrix * viewMatrix * projectionMatrix;
 
-            
+
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime) {
-            int i;
-            Effect ObjEffect;
+            //Send most of what we need to the shaders.
+            this.SendDataToShaders();
+
+            #region DepthBuffer Rendering
+            //Set depth buffer comparign to less.
+            this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.Less;
+            
 
 
-            GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
+            //Render the scene for each light.
+            this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["ShadowMapped"];
+            this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
+            this.P4Effect.Parameters["Projection"].SetValue(this.lightProjectionMatrix);
+            this.P4Effect.Parameters["LightIndex"].SetValue(0);
+            
+            this.GraphicsDevice.Clear(Color.TransparentBlack);
+
+            //The values 0-5 are the int casts of the enumerations CubeMapFace.  Basically, this saves typing.
+            for (int f = 0; f < 6; f++) {
+                //Cast to something more useful.
+                CubeMapFace face = (CubeMapFace)f;
+
+                //Set view direction and cube face.
+                this.P4Effect.Parameters["View"].SetValue(LiteSource[0].GetViewMatrix(face));
+                this.GraphicsDevice.SetRenderTarget(0, LiteSource[0].LightCube, face);
+
+                this.masterRoom.DrawFloor();
+                this.enemy.DrawShadowEffect(this.GraphicsDevice);
+            }
+
+
+
+
+            //this.P4Effect.Parameters["LightView"].SetValue(LiteSource[0].GetViewMatrix(CubeMapFace.NegativeY));
+
+            this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
+            this.GraphicsDevice.SetRenderTarget(0, null);
+
+            //LiteSource[0].LightCube.GetTexture().
+            TextureCube cube = LiteSource[0].LightCube.GetTexture();
+            Color[] data = new Color[256 * 256];
+            cube.GetData<Color>(CubeMapFace.NegativeY, data);
+            Texture2D tex = new Texture2D(this.GraphicsDevice, 256, 256);
+            tex.SetData<Color>(data);
+
+            /*foreach(AmbDiffSpecLights light in this.LiteSource) {
+                if (light.Is_on == 0) { continue; }
+
+                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.NegativeX);
+
+                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.NegativeY);
+
+                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.NegativeZ);
+
+                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveX);
+
+                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveY);
+
+                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveZ);
+            }*/
+            //Reset depth buffer comparison.
+            this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
+
+            #endregion
+
+            #region SceneRendering
+            //Set effect to scene rendering.
+            this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["BumpMapped"];
+            this.P4Effect.Parameters["View"].SetValue(this.viewMatrix);
+            this.P4Effect.Parameters["Projection"].SetValue(this.projectionMatrix);
+
+            //Set light shadow cubes.
+            this.P4Effect.Parameters["ShadowCube"].SetValue(LiteSource[0].LightCube.GetTexture());
+
             //Set render target.
             this.GraphicsDevice.SetRenderTarget(0, this.motionTarget);
 
             graphics.GraphicsDevice.Clear(Color.Black);
-            ObjEffect = masterRoom.WallEffect;
+
+            base.Draw(gameTime);
+
+            #endregion
+
+            #region PostProcessing
+
+            #endregion
+
+            //Reset render target.
+            this.GraphicsDevice.SetRenderTarget(0, null);
+            //Finally put shit on screen.
+            this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+            this.spriteBatch.Draw(this.motionTarget.GetTexture(), Vector2.Zero, Color.White);
+
+            this.spriteBatch.Draw(tex, Vector2.Zero, Color.White);
+
+            this.spriteBatch.End();
+        }
+
+        private void SendDataToShaders() {
+            Effect ObjEffect = masterRoom.WallEffect;
 
             // maybe bad programming planning 
             ObjEffect.Parameters["eyePosition"].SetValue(Arnold.Position);
             ObjEffect.Parameters["numLights"].SetValue(masterRoom.NumOfLights);
 
             // set up lights in shader code
-            for (i = 0; i < masterRoom.NumOfLights; i++) {
+            for (int i = 0; i < masterRoom.NumOfLights; i++) {
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["position"].SetValue(LiteSource[i].Position);
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["ambientLight"].SetValue(LiteSource[i].Coefficient_ambient);
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["diffuseLight"].SetValue(LiteSource[i].Coefficient_diffuse);
@@ -398,12 +490,13 @@ namespace Dungeon {
                 ObjEffect.Parameters["light"].Elements[i].StructureMembers["lightDir"].SetValue(LiteSource[i].LightDirection);
             }
 
-            //Set parameters for floor shader.
-            ObjEffect = masterRoom.p4Effect;
+            //Set parameters for our shader.
+            ObjEffect = this.P4Effect;
             ObjEffect.Parameters["Viewpoint"].SetValue(Arnold.Position);
             ObjEffect.Parameters["NumLights"].SetValue(masterRoom.NumOfLights);
 
-            for (i = 0; i < masterRoom.NumOfLights; i++) {
+
+            for (int i = 0; i < masterRoom.NumOfLights; i++) {
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Position"].SetValue(LiteSource[i].Position);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["AmbientLight"].SetValue(LiteSource[i].Coefficient_ambient);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["DiffuseLight"].SetValue(LiteSource[i].Coefficient_diffuse);
@@ -414,15 +507,8 @@ namespace Dungeon {
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["IsPointLight"].SetValue(LiteSource[i].Is_PointLight);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Direction"].SetValue(LiteSource[i].LightDirection);
             }
-
-            base.Draw(gameTime);
-
-            //Reset render target.
-            this.GraphicsDevice.SetRenderTarget(0, null);
-
-            this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
-            this.spriteBatch.Draw(this.motionTarget.GetTexture(), Vector2.Zero, Color.White);
-            this.spriteBatch.End();
         }
+
+
     }
 }

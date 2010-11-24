@@ -31,8 +31,8 @@ namespace Dungeon.Lights
         public Vector4 c_specular;
         public float shininess;
 
-        public AmbDiffSpecLights(Game game)
-            : base(game)
+        public AmbDiffSpecLights(Game game, int resolution)
+            : base(game, resolution)
         {
             
         }

@@ -21,8 +21,7 @@ using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Content;
 
 namespace Dungeon.Furniture
-{
-    
+{ 
     public class Room : Microsoft.Xna.Framework.DrawableGameComponent
     {
         private Vector3 FrontNormal = new Vector3(0.0f, 0.0f, 1.0f);
@@ -50,7 +49,6 @@ namespace Dungeon.Furniture
         public Vector4 s_material;
 
         public Effect wallEffect;
-        public Effect p4Effect;
         public EffectTechnique renderingTech;
 
         public Matrix WorldMatrix { get; set; }
@@ -492,10 +490,8 @@ namespace Dungeon.Furniture
             //wallEffect.GraphicsDevice.VertexDeclaration = WallVertexDecl;
 
             //Vertices are the same, so we don't need to change the verteex declaration.
-
-            p4Effect.Parameters["World"].SetValue(this.WorldMatrix);
-            p4Effect.Parameters["View"].SetValue(this.View);
-            p4Effect.Parameters["Projection"].SetValue(this.Projection);
+            Effect p4Effect = (this.Game as Game1).P4Effect;
+            //p4Effect.Parameters["World"].SetValue(this.WorldMatrix);
             p4Effect.Parameters["Diffuse"].SetValue(this.flagstoneDiffuse);
             p4Effect.Parameters["Normal"].SetValue(this.flagstoneNormal);
             p4Effect.Parameters["Specular"].SetValue(this.flagstoneSpecular);
@@ -505,9 +501,18 @@ namespace Dungeon.Furniture
 
             p4Effect.CurrentTechnique = p4Effect.Techniques["BumpMapped"];
 
+            this.DrawFloor();
+
+            base.Draw(gameTime);
+        }
+
+        public void DrawFloor() {
+            //Set vertex declaration.
+            (this.Game as Game1).GraphicsDevice.VertexDeclaration = WallVertexDecl;
+
+            Effect p4Effect = (this.Game as Game1).P4Effect;
             p4Effect.Begin();
-            foreach (EffectPass pass in this.p4Effect.CurrentTechnique.Passes)
-            {
+            foreach (EffectPass pass in p4Effect.CurrentTechnique.Passes) {
                 pass.Begin();
                 p4Effect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
                                                         vertex,
@@ -519,8 +524,6 @@ namespace Dungeon.Furniture
                 pass.End();
             }
             p4Effect.End();
-
-            base.Draw(gameTime);
         }
     }
 }
