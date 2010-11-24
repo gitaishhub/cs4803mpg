@@ -332,159 +332,158 @@ namespace Dungeon.Furniture
         {
             //Eh, the wall and floor effect have the same device, so this is safe.
             wallEffect.GraphicsDevice.VertexDeclaration = WallVertexDecl;
-            //#region Wall / Sky Drawing
-            //wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
+            #region Wall / Sky Drawing
+            wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
 
-            //wallEffect.Parameters["gWVP"].SetValue(WVP);
-            //wallEffect.Parameters["gWorld"].SetValue(WorldMatrix);
+            wallEffect.Parameters["gWVP"].SetValue(this.WorldMatrix * this.View * this.Projection);
+            wallEffect.Parameters["gWorld"].SetValue(WorldMatrix);
 
-            //wallEffect.Parameters["material"].StructureMembers["a_material"].SetValue(a_material);
-            //wallEffect.Parameters["material"].StructureMembers["d_material"].SetValue(d_material);
-            //wallEffect.Parameters["material"].StructureMembers["s_material"].SetValue(s_material);
+            wallEffect.Parameters["material"].StructureMembers["a_material"].SetValue(a_material);
+            wallEffect.Parameters["material"].StructureMembers["d_material"].SetValue(d_material);
+            wallEffect.Parameters["material"].StructureMembers["s_material"].SetValue(s_material);
 
-            //wallEffect.Parameters["map"].SetValue(texture_brick); // will change inside the pass
-            ////wallEffect.Parameters["map2"].SetValue(texture_monalisa_spook);
-            ////wallEffect.Parameters["morphrate"].SetValue(morphrate);
+            wallEffect.Parameters["map"].SetValue(texture_brick); // will change inside the pass
+            //wallEffect.Parameters["map2"].SetValue(texture_monalisa_spook);
+            //wallEffect.Parameters["morphrate"].SetValue(morphrate);
 
+
+            wallEffect.Begin();
+            foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes) {
+                pass.Begin();
+
+                // drawing walls
+                wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+                                                    vertex,
+                                                    0,
+                                                    16,
+                                                    triangleListIndices,
+                                                    0,
+                                                    8);
+
+                // Change texture to stone picture
+                //wallEffect.Parameters["map"].SetValue(this.flagstoneDiffuse);
+                //wallEffect.CommitChanges();
+
+                //// drawing ground
+                //wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+                //                                    vertex,
+                //                                    0,
+                //                                    24,
+                //                                    triangleListIndices,
+                //                                    24,
+                //                                    2);
+
+
+                // Change texture to cosmo picture
+                wallEffect.Parameters["map"].SetValue(texture_sky);
+                wallEffect.CommitChanges();
+                // drawing sky
+                wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+                                                    vertex,
+                                                    0,
+                                                    24,
+                                                    triangleListIndices,
+                                                    30,
+                                                    2);
+
+                // Change texture to mona lisa
+                //wallEffect.Parameters["map"].SetValue(texture_monalisa);
+                //wallEffect.CommitChanges();
+
+
+                //// drawing the regular mona lisa
+                //wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+                //                                    vertex,
+                //                                    0,
+                //                                    32,
+                //                                    triangleListIndices,
+                //                                    42,
+                //                                    2);                
+
+                pass.End();
+            }
+            wallEffect.End();
+
+            //wallEffect.CurrentTechnique = WallEffect.Techniques["LightMapTech"];
+
+            //wallEffect.Parameters["map2"].SetValue(texture_lightmap);
+            //wallEffect.Begin();
+            //foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
+            //{
+            //    pass.Begin();
+
+            //    // drawing the growling mona lisa
+            //    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+            //                                        vertex,
+            //                                        0,
+            //                                        28,
+            //                                        triangleListIndices,
+            //                                        36,
+            //                                        2);
+
+
+            //    pass.End();
+            //}
+            //wallEffect.End();
+
+
+            // Drawing the spooky mona lisa
+            //wallEffect.CurrentTechnique = WallEffect.Techniques["MorphTech"];
+            //wallEffect.Parameters["map2"].SetValue(texture_monalisa_spook);
 
             //wallEffect.Begin();
             //foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
             //{
             //    pass.Begin();
-    
-            //     // drawing walls
+
             //    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
             //                                        vertex,
             //                                        0,
-            //                                        16,
+            //                                        36,
             //                                        triangleListIndices,
-            //                                        0,
-            //                                        8);
-
-            //    // Change texture to stone picture
-            //    //wallEffect.Parameters["map"].SetValue(this.flagstoneDiffuse);
-            //    //wallEffect.CommitChanges();
-
-            //    //// drawing ground
-            //    //wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            //    //                                    vertex,
-            //    //                                    0,
-            //    //                                    24,
-            //    //                                    triangleListIndices,
-            //    //                                    24,
-            //    //                                    2);
-
-
-            //    // Change texture to cosmo picture
-            //    wallEffect.Parameters["map"].SetValue(texture_sky);
-            //    wallEffect.CommitChanges();
-            //    // drawing sky
-            //    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            //                                        vertex,
-            //                                        0,
-            //                                        24,
-            //                                        triangleListIndices,
-            //                                        30,
+            //                                        48,
             //                                        2);
 
-            //    // Change texture to mona lisa
-            //    //wallEffect.Parameters["map"].SetValue(texture_monalisa);
-            //    //wallEffect.CommitChanges();
-               
 
-            //    //// drawing the regular mona lisa
-            //    //wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            //    //                                    vertex,
-            //    //                                    0,
-            //    //                                    32,
-            //    //                                    triangleListIndices,
-            //    //                                    42,
-            //    //                                    2);                
-                
             //    pass.End();
             //}
             //wallEffect.End();
 
-            ////wallEffect.CurrentTechnique = WallEffect.Techniques["LightMapTech"];
 
-            ////wallEffect.Parameters["map2"].SetValue(texture_lightmap);
-            ////wallEffect.Begin();
-            ////foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
-            ////{
-            ////    pass.Begin();
+            // Drawing the rotating mona lisa
+            //wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
+            //wallEffect.Parameters["gWorld"].SetValue(spinMatrix);
+            //wallEffect.Parameters["gWVP"].SetValue(spinWVP);
+            //wallEffect.Begin();
+            //foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
+            //{
+            //    pass.Begin();
 
-            ////    // drawing the growling mona lisa
-            ////    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            ////                                        vertex,
-            ////                                        0,
-            ////                                        28,
-            ////                                        triangleListIndices,
-            ////                                        36,
-            ////                                        2);
-
-
-            ////    pass.End();
-            ////}
-            ////wallEffect.End();
+            //    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+            //                                        vertex,
+            //                                        0,
+            //                                        40,
+            //                                        triangleListIndices,
+            //                                        54,
+            //                                        2);
 
 
-            //// Drawing the spooky mona lisa
-            ////wallEffect.CurrentTechnique = WallEffect.Techniques["MorphTech"];
-            ////wallEffect.Parameters["map2"].SetValue(texture_monalisa_spook);
-
-            ////wallEffect.Begin();
-            ////foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
-            ////{
-            ////    pass.Begin();
-
-            ////    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            ////                                        vertex,
-            ////                                        0,
-            ////                                        36,
-            ////                                        triangleListIndices,
-            ////                                        48,
-            ////                                        2);
+            //    // Change texture to cosmo picture
+            //    wallEffect.Parameters["map"].SetValue(texture_monalisa_warp);
+            //    wallEffect.CommitChanges();
+            //    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
+            //                                       vertex,
+            //                                       0,
+            //                                       44,
+            //                                       triangleListIndices,
+            //                                       60,
+            //                                       2);
 
 
-            ////    pass.End();
-            ////}
-            ////wallEffect.End();
-
-
-            //// Drawing the rotating mona lisa
-            ////wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
-            ////wallEffect.Parameters["gWorld"].SetValue(spinMatrix);
-            ////wallEffect.Parameters["gWVP"].SetValue(spinWVP);
-            ////wallEffect.Begin();
-            ////foreach (EffectPass pass in wallEffect.CurrentTechnique.Passes)
-            ////{
-            ////    pass.Begin();
-
-            ////    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            ////                                        vertex,
-            ////                                        0,
-            ////                                        40,
-            ////                                        triangleListIndices,
-            ////                                        54,
-            ////                                        2);
-
-
-            ////    // Change texture to cosmo picture
-            ////    wallEffect.Parameters["map"].SetValue(texture_monalisa_warp);
-            ////    wallEffect.CommitChanges();
-            ////    wallEffect.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList,
-            ////                                       vertex,
-            ////                                       0,
-            ////                                       44,
-            ////                                       triangleListIndices,
-            ////                                       60,
-            ////                                       2);
-
-
-            ////    pass.End();
-            ////}
-            ////wallEffect.End();
-            //#endregion
+            //    pass.End();
+            //}
+            //wallEffect.End();
+            #endregion
 
             //wallEffect.CurrentTechnique = WallEffect.Techniques["myTech"];
             //wallEffect.GraphicsDevice.VertexDeclaration = WallVertexDecl;
