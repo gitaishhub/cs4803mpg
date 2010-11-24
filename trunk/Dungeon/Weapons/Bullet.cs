@@ -231,7 +231,7 @@ namespace Dungeon.Weapons
 
         public override void Initialize()
         {
-            radius = 10;
+            radius = 5;
 
             base.Initialize();
         }
