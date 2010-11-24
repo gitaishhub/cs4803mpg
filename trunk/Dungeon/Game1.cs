@@ -39,6 +39,10 @@ namespace Dungeon {
         public int numberdiffLights, numberspecLights;
         public AmbDiffSpecLights[] LiteSource;
         public KeyboardState oldState;
+        private KeyboardState prevKeyboard;
+
+        private bool blur = false;
+        private bool debug = false;
 
         //public Pyramid[] nugget;
         //public Teapot[] teapot;
@@ -46,6 +50,7 @@ namespace Dungeon {
         public Matrix viewMatrix;
         public Matrix projectionMatrix;
         public Matrix lightProjectionMatrix;
+
         private Vector3 spin;
 
         private RenderTarget2D sceneTarget;
@@ -106,7 +111,7 @@ namespace Dungeon {
             LiteSource[1].Coefficient_diffuse = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
             LiteSource[1].Coefficient_specular = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
             LiteSource[1].Shininess = 4.0f;
-            LiteSource[1].Is_on = 0;
+            LiteSource[1].Is_on = 1;
             LiteSource[1].Is_PointLight = 1;
             LiteSource[1].LightDirection = new Vector4(-180.0f, 100.0f, -180.0f, 0.0f); // Not used if this is a point light.
             LiteSource[1].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
@@ -119,7 +124,7 @@ namespace Dungeon {
             LiteSource[2].Coefficient_diffuse = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
             LiteSource[2].Coefficient_specular = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[2].Shininess = 8.0f;
-            LiteSource[2].Is_on = 0;
+            LiteSource[2].Is_on = 1;
             LiteSource[2].Is_PointLight = 1;
             LiteSource[2].LightDirection = new Vector4(1.0f, 0.0f, 1.0f, 0.0f); // Not used if this is a point light.
             LiteSource[2].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
@@ -132,7 +137,7 @@ namespace Dungeon {
             LiteSource[3].Coefficient_diffuse = new Vector4(0.3f, 0.3f, 1.0f, 1.0f);
             LiteSource[3].Coefficient_specular = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
             LiteSource[3].Shininess = 8.0f;
-            LiteSource[3].Is_on = 0;
+            LiteSource[3].Is_on = 1;
             LiteSource[3].Is_PointLight = 1;
             LiteSource[3].LightDirection = new Vector4(0.0f, 0.0f, 1.0f, 0.0f); // Not used if this is a point light.
             LiteSource[3].Attenuation = new Vector4(1.0f, 0.000075f, 0.0f, 0.0f); // smooth attenuation
@@ -231,7 +236,6 @@ namespace Dungeon {
             //Setup the view matrix for shadow mapping.
             this.lightProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1, 0.1f, 1024f);
 
-
             Arnold.ViewMatrix = viewMatrix;
             Arnold.ProjectionMatrix = projectionMatrix;
 
@@ -274,7 +278,7 @@ namespace Dungeon {
             //teapot[1].TeapotEffect.CurrentTechnique = teapot[1].TeapotEffect.Techniques["myTech"];
 
             this.sceneTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
-            this.depthTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
+            this.depthTarget = new RenderTarget2D(GraphicsDevice, 256, 256, 1, GraphicsDevice.DisplayMode.Format);
 
             base.LoadContent();
         }
@@ -368,6 +372,10 @@ namespace Dungeon {
             //// place the teapot2
             //teapot[1].gWVP = teapot[1].WorldMatrix * viewMatrix * projectionMatrix;
 
+            //Toggle blurring and debugging.
+            if (keyboard.IsKeyDown(Keys.B) && !this.prevKeyboard.IsKeyDown(Keys.B)) { this.blur = !this.blur; }
+            if (keyboard.IsKeyDown(Keys.D) && !this.prevKeyboard.IsKeyDown(Keys.D)) { this.debug = !this.debug; }
+            this.prevKeyboard = keyboard;
 
             base.Update(gameTime);
         }
@@ -386,7 +394,8 @@ namespace Dungeon {
             this.GraphicsDevice.Clear(Color.TransparentBlack);
 
             //The values 0-5 are the int casts of the enumerations CubeMapFace.  Basically, this saves typing.
-            for (int f = 0; f < 6; f++) {
+            //This overachievment was going to get me ownt.  I left it here in case you wanted to look at it.
+            for (int f = 3; f < 4; f++) {
                 //Cast to something more useful.
                 CubeMapFace face = (CubeMapFace)f;
 
@@ -397,13 +406,13 @@ namespace Dungeon {
                 this.masterRoom.DrawFloor();
                 this.enemy.DrawShadowEffect(this.GraphicsDevice);
             }
-            
-            //Render depth buffer for camera.
+
+            //Render depth buffer for light 0.
             this.GraphicsDevice.SetRenderTarget(0, this.depthTarget);
 
             this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
-            this.P4Effect.Parameters["View"].SetValue(this.viewMatrix);
-            this.P4Effect.Parameters["Projection"].SetValue(this.projectionMatrix);
+            this.P4Effect.Parameters["View"].SetValue(this.LiteSource[0].GetLookAt(this.enemy.Position));
+            this.P4Effect.Parameters["Projection"].SetValue(this.lightProjectionMatrix);
 
             this.GraphicsDevice.Clear(Color.TransparentBlack);
             this.masterRoom.DrawFloor();
@@ -412,19 +421,21 @@ namespace Dungeon {
             #endregion
 
             #region SceneRendering
+            //Set render target.
+            this.GraphicsDevice.SetRenderTarget(0, this.sceneTarget);
+
             //Set effect to scene rendering.
             this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["BumpMapped"];
             this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
             this.P4Effect.Parameters["View"].SetValue(this.viewMatrix);
             this.P4Effect.Parameters["Projection"].SetValue(this.projectionMatrix);
 
+            this.P4Effect.Parameters["ShadowMap"].SetValue(this.depthTarget.GetTexture());
+
             //Set light shadow cubes.
-            this.P4Effect.Parameters["ShadowCube"].SetValue(LiteSource[0].LightCube.GetTexture());
+            //this.P4Effect.Parameters["ShadowCube"].SetValue(LiteSource[0].LightCube.GetTexture());
 
-            //Set render target.
-            this.GraphicsDevice.SetRenderTarget(0, this.sceneTarget);
-
-            graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
+            //graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
             base.Draw(gameTime);
 
@@ -433,19 +444,43 @@ namespace Dungeon {
             #region PostProcessing
             //Reset render target.
             this.GraphicsDevice.SetRenderTarget(0, null);
-            
-            this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["MotionBlurred"];
 
-            
+
+
             //Finally put shit on screen.
-            this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
-            this.spriteBatch.Draw(this.sceneTarget.GetTexture(), Vector2.Zero, Color.White);
+            if (this.blur) {
+                this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["Blurred"];
 
-            this.spriteBatch.End();
+                P4Effect.Begin();
+                this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+
+                foreach (EffectPass pass in P4Effect.CurrentTechnique.Passes) {
+                    pass.Begin();
+                    this.spriteBatch.Draw(this.sceneTarget.GetTexture(), Vector2.Zero, Color.White);
+                    pass.End();
+                }
+                this.spriteBatch.End();
+                P4Effect.End();
+            } else {
+                this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+                this.spriteBatch.Draw(this.sceneTarget.GetTexture(), Vector2.Zero, Color.White);
+                this.spriteBatch.End();
+            }
 
             #endregion
 
+            if (this.debug) {
+                Single[] data = new Single[256 * 256];
+                TextureCube cube = this.LiteSource[0].LightCube.GetTexture();
+                cube.GetData<Single>(CubeMapFace.NegativeY, data);
+                Texture2D tex = new Texture2D(this.GraphicsDevice, 256, 256);
+                tex.SetData<Single>(data);
 
+                this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+                this.spriteBatch.Draw(tex, Vector2.Zero, Color.White);
+                //this.spriteBatch.Draw(this.depthTarget.GetTexture(), Vector2.Zero, Color.White);
+                this.spriteBatch.End();
+            }
         }
 
         private void SendDataToShaders() {
@@ -484,6 +519,9 @@ namespace Dungeon {
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Attenuation"].SetValue(LiteSource[i].Attenuation);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["IsPointLight"].SetValue(LiteSource[i].Is_PointLight);
                 ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Direction"].SetValue(LiteSource[i].LightDirection);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["World"].SetValue(Matrix.Identity);
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["View"].SetValue(LiteSource[i].GetLookAt(this.enemy.Position));
+                ObjEffect.Parameters["Lights"].Elements[i].StructureMembers["Projection"].SetValue(this.lightProjectionMatrix);
             }
         }
 

@@ -8,6 +8,9 @@ struct Light {
 	int    On;
 	int    IsPointLight;
 	float4 Attenuation;
+	float4x4 World;
+	float4x4 View;
+	float4x4 Projection;
 };
 
 struct MaterialProperty {
@@ -21,9 +24,6 @@ uniform extern float4x4 World;
 uniform extern float4x4 View;
 uniform extern float4x4 Projection;
 uniform extern float3 Viewpoint;
-uniform extern float4x4 VPInverse;
-uniform extern float4x4 previousVPInverse;
-uniform extern int numSamples;
 
 //Rendering variables.
 uniform extern Light Lights[4];
@@ -38,14 +38,12 @@ uniform sampler2D NormalSampler = sampler_state { texture = <Normal>; mipfilter 
 uniform sampler2D SpecularSampler = sampler_state { texture = <Specular>; mipfilter = LINEAR; };
 
 //Depth variables.
-uniform extern texture ShadowCube;
-uniform samplerCUBE ShadowCubeSampler = sampler_state { texture = <ShadowCube>; };
+uniform extern texture ShadowMap;
+uniform sampler2D ShadowSampler = sampler_state { texture = <ShadowMap>; };
 
 //Post-processing variables.
-uniform extern Texture DepthTexture;
 uniform extern Texture ScreenTexture;
 uniform sampler2D ScreenSampler = sampler_state { texture = <ScreenTexture>; mipfilter = linear; };
-uniform sampler2D DepthSampler = sampler_state { texture = <DepthTexture>; mipfilter = linear; };
 
 struct VertexShaderInput
 {
@@ -56,9 +54,10 @@ struct VertexShaderInput
 
 struct VertexShaderOutput
 {
-    float4 Position			: POSITION0;
-    float3 WorldPosition    : TEXCOORD1;
-    float2 TexCoord			: TEXCOORD0;
+    float4 Position	: POSITION0;
+    float2 TexCoord	: TEXCOORD0;
+    float4 LightPos	: TEXCOORD1;
+    float4 WorldPos	: TEXCOORD2;
 };
 
 VertexShaderOutput VertexShader(VertexShaderInput input)
@@ -66,7 +65,8 @@ VertexShaderOutput VertexShader(VertexShaderInput input)
     VertexShaderOutput output;
     
     output.Position = mul(mul(mul(input.Position, World), View), Projection);
-    output.WorldPosition = mul(input.Position, World);
+    output.WorldPos = mul(input.Position, World);
+    output.LightPos = mul(mul(mul(input.Position, Lights[0].World), Lights[0].View), Lights[0].Projection);
     output.TexCoord = input.TexCoord;
     
     return output;
@@ -81,9 +81,10 @@ float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
     
     float4 lightColor = 0;
     float4 ambient, diffuse, specular;
-    float3 V = normalize(Viewpoint - input.WorldPosition);
+    float3 V = normalize(Viewpoint - input.WorldPos);
     float3 L, H;
-    float attenuation, dist, lightDepth, A, D, S;
+    float2 lightTex;
+    float attenuation, dist, lightDepth, pixelDepth, A, D, S;
     
     for (int i = 0; i < NumLights; i++) {
 		ambient = 0.0f;
@@ -92,35 +93,43 @@ float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
 		attenuation = 1.0f;
 		
 		//Get vector to light source.
-		L =  Lights[i].Position.xyz - input.WorldPosition;
-		//Calculate distance to light.
-		dist  = distance(Lights[i].Position, input.WorldPosition);		
-		//Normalize L (we already have dist, so I'll just divide).
-		L = L / dist;
+		L =  Lights[i].Position.xyz - input.WorldPos;		
+		//Normalize L.
+		L = normalize(L);
+		
 		//Lookup depth value in shadow cube.
-		lightDepth = 150;//texCUBE(ShadowCubeSampler, -L);
+		lightTex.x =  input.LightPos.x / input.LightPos.w / 2 + 0.5;
+		lightTex.y = -input.LightPos.y / input.LightPos.w / 2 + 0.5;
+		//lightTex = saturate(lightTex);
+		
+		
+		lightDepth = tex2D(ShadowSampler, lightTex).r;
+		pixelDepth = input.LightPos.z / input.LightPos.w;
 		
 		//If pixel is in shadow, do nothing.  Else color the pixel for this light.
-		if (Lights[i].On && dist <= lightDepth ) {
+		if (Lights[i].On && pixelDepth - 0.01 <= lightDepth) {
 			//Calculate light ray and half-angle.
-			/*if (Lights[i].IsPointLight) {
-				L =  Lights[i].Position - input.WorldPosition;
+			if (Lights[i].IsPointLight) {
+				L =  Lights[i].Position - input.WorldPos;
+				dist = length(L);
 			} else {
 				L = -Lights[i].Direction;
-			}*/
+				dist = 1;
+			}
 			
 			L = normalize(L);
 			H = normalize(L+V);
-			 
+			
+			
 			//Calculate diffuse, specular, and attenuation coefficients.								
 			D =		max(dot(normal, L), 0);
-			//S = pow(max(dot(normal, H), 0), Lights[i].Shininess);
-			//A = Lights[i].Attenuation.x +  Lights[i].Attenuation.y*dist + Lights[i].Attenuation.y*dist*dist;
+			S = pow(max(dot(normal, H), 0), Lights[i].Shininess);
+			A = Lights[i].Attenuation.x +  Lights[i].Attenuation.y*dist + Lights[i].Attenuation.y*dist*dist;
 			
 			
-			//ambient = Material.Ambient * Lights[i].AmbientLight;
+			ambient = Material.Ambient * Lights[i].AmbientLight;
 			diffuse = /*Material.Diffuse */ Lights[i].DiffuseLight * D;
-			//specular = Material.Specular * Lights[i].SpecLight * S;		
+			specular = Material.Specular * Lights[i].SpecLight * S;		
 		}
 		
 		lightColor = lightColor + diffuse; //ambient + (diffuse + specular); // A;
@@ -149,11 +158,11 @@ float4 DepthFragmentShader(DepthVertexShaderOutput input) : COLOR0 {
 	return input.DepthRay.z / input.DepthRay.w;
 }
 
-//Motion Blurring.
-float4 MotionBlurPixel(float2 TexCoord : TEXCOORD0) : COLOR0
+//Blurring.
+float4 BlurPixel(float2 TexCoord : TEXCOORD0) : COLOR0
 {
-	//Get depth buffer value at pixel.
-	/*float4 depth = tex2D(DepthSampler, TexCoord);
+	/*//Get depth buffer value at pixel.
+	float4 depth = tex2D(DepthSampler, TexCoord);
 	float zOverW = depth.z / depth.w;
 	//Calculate viewport position at pixel -1 to 1.
 	float4 view = float4(TexCoord.x * 2 - 1, (1 - TexCoord.y) * 2 - 1, zOverW, 1);
@@ -163,18 +172,33 @@ float4 MotionBlurPixel(float2 TexCoord : TEXCOORD0) : COLOR0
 	float4 worldPos = trans / trans.w;
 	
 	float4 currentPos = view;
-	float4 previousPos = mul(worldPos, previousVPInverse);
+	float4 previousPos = mul(worldPos, PreviousVPInverse);
 	previousPos /= previousPos.w;
 	float2 velocity = (currentPos - previousPos)/2.0f;
 	
 	//get initial color of pixel
 	float4 color = float4(0, 0, 0, 0);
-	for(int i = 0; i < numSamples; i++)
+	for(int i = 0; i < NumSamples; i++)
 	{
 		color += tex2D(ScreenSampler, TexCoord);
 		TexCoord += velocity;
-	}*/
-	return tex2D(ScreenSampler, TexCoord);	
+	}
+	return color / NumSamples;*/
+	
+	float blur = 0.008;
+	
+	float2 up    = float2(TexCoord.x, TexCoord.y + blur);
+	float2 right = float2(TexCoord.x + blur, TexCoord.y);
+	float2 down  = float2(TexCoord.x, TexCoord.y - blur);
+	float2 left  = float2(TexCoord.x - blur, TexCoord.y);
+	
+	float4 color = 5 * tex2D(ScreenSampler, TexCoord);
+	color += tex2D(ScreenSampler, up);
+	color += tex2D(ScreenSampler, right);
+	color += tex2D(ScreenSampler, down);
+	color += tex2D(ScreenSampler, left);
+	
+	return color / 9;
 }
 
 technique BumpMapped
@@ -193,10 +217,10 @@ technique DepthMapped {
 	}
 }
 
-technique MotionBlurred
+technique Blurred
 {
-    pass Motion
+    pass Blur
     {
-        PixelShader = compile ps_3_0 MotionBlurPixel();
+        PixelShader = compile ps_3_0 BlurPixel();
     }
 }

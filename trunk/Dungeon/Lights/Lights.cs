@@ -103,6 +103,11 @@ namespace Dungeon.Lights {
             base.Update(gameTime);
         }
 
+        public Matrix GetLookAt(Vector3 target) {
+            Vector3 pos = new Vector3(this.Position.X, this.Position.Y, this.Position.Z);
+            return Matrix.CreateLookAt(pos, target, Vector3.Up);
+        }
+
         //Stripped from the internet.
         public Matrix GetViewMatrix(CubeMapFace face) {
             Vector3 pos = new Vector3(this.Position.X, this.Position.Y, this.Position.Z);

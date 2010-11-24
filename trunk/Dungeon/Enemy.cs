@@ -129,14 +129,8 @@ namespace Dungeon
                 if (!(component is Bullet)) { continue; }
 
                 Bullet bullet = component as Bullet;
-                Enemy enemy = component as Enemy;
-                bool hit = false;
-                BoundingSphere bounds = bullet.Bounds;
-                foreach (BoundingSphere sphere in this.Bounds)
-                {
-                    hit |= sphere.Intersects(bounds);
-                }
-                if (hit)
+                
+                if (Vector3.DistanceSquared(bullet.Position, this.Position) < 24*24)
                 {
                     Console.Out.WriteLine("Trex Died");
                     Game.Components.Remove(bullet);
