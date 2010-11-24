@@ -377,15 +377,15 @@ namespace Dungeon {
 
             #region DepthBuffer Rendering
             //Set depth buffer comparign to less.
-            this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.Less;
+            this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
             
 
 
             //Render the scene for each light.
-            this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["ShadowMapped"];
+            this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["DepthMapped"];
             this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
             this.P4Effect.Parameters["Projection"].SetValue(this.lightProjectionMatrix);
-            this.P4Effect.Parameters["LightIndex"].SetValue(0);
+            //this.P4Effect.Parameters["LightIndex"].SetValue(0);
             
             this.GraphicsDevice.Clear(Color.TransparentBlack);
 
@@ -407,15 +407,7 @@ namespace Dungeon {
 
             //this.P4Effect.Parameters["LightView"].SetValue(LiteSource[0].GetViewMatrix(CubeMapFace.NegativeY));
 
-            this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
-            this.GraphicsDevice.SetRenderTarget(0, null);
-
-            //LiteSource[0].LightCube.GetTexture().
-            TextureCube cube = LiteSource[0].LightCube.GetTexture();
-            Color[] data = new Color[256 * 256];
-            cube.GetData<Color>(CubeMapFace.NegativeY, data);
-            Texture2D tex = new Texture2D(this.GraphicsDevice, 256, 256);
-            tex.SetData<Color>(data);
+            
 
             /*foreach(AmbDiffSpecLights light in this.LiteSource) {
                 if (light.Is_on == 0) { continue; }
@@ -432,6 +424,10 @@ namespace Dungeon {
 
                 this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveZ);
             }*/
+            //Reset the world matrix.
+            this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
+            //Release render target, so we can read from it.
+            this.GraphicsDevice.SetRenderTarget(0, null);
             //Reset depth buffer comparison.
             this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
 
@@ -449,7 +445,7 @@ namespace Dungeon {
             //Set render target.
             this.GraphicsDevice.SetRenderTarget(0, this.motionTarget);
 
-            graphics.GraphicsDevice.Clear(Color.Black);
+            graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
             base.Draw(gameTime);
 
@@ -465,7 +461,7 @@ namespace Dungeon {
             this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
             this.spriteBatch.Draw(this.motionTarget.GetTexture(), Vector2.Zero, Color.White);
 
-            this.spriteBatch.Draw(tex, Vector2.Zero, Color.White);
+            //this.spriteBatch.Draw(tex, Vector2.Zero, Color.White);
 
             this.spriteBatch.End();
         }

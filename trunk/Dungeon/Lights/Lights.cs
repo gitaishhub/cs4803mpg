@@ -103,28 +103,8 @@ namespace Dungeon.Lights {
             base.Update(gameTime);
         }
 
-        //Converted from source on XNA forums.
-        //http://forums.create.msdn.com/forums/p/34789/210616.aspx
+        //Stripped from the internet.
         public Matrix GetViewMatrix(CubeMapFace face) {
-            /*Vector3[] dirs = new Vector3[6];
-            dirs[0] = Vector3.Right;
-            dirs[1] = Vector3.Left;
-            dirs[2] = Vector3.Up;
-            dirs[3] = Vector3.Down;
-            dirs[4] = Vector3.Forward;
-            dirs[5] = Vector3.Backward;
-
-            Vector3[] ups = new Vector3[6];
-            ups[0] = Vector3.Up;
-            ups[1] = Vector3.Up;
-            ups[2] = Vector3.Backward;
-            ups[3] = Vector3.Forward;
-            ups[4] = Vector3.Up;
-            ups[5] = Vector3.Up;
-
-            Vector3 pos = new Vector3(this.Position.X, this.Position.Y, this.Position.Z);
-            return Matrix.CreateLookAt(pos, pos + dirs[(int)face], ups[(int)face]);*/
-
             Vector3 pos = new Vector3(this.Position.X, this.Position.Y, this.Position.Z);
             Matrix viewMatrix = Matrix.Identity;
             switch (face) {

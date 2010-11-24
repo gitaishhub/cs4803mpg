@@ -42,11 +42,7 @@ uniform sampler2D DiffuseSampler = sampler_state { texture = <Diffuse>; mipfilte
 uniform sampler2D NormalSampler = sampler_state { texture = <Normal>; mipfilter = LINEAR; };
 uniform sampler2D SpecularSampler = sampler_state { texture = <Specular>; mipfilter = LINEAR; };
 
-//Shadowing variables.
-uniform extern float4x4 LightView;
-uniform extern float4x4 LightProjection;
-uniform extern int LightIndex;
-
+//Depth variables.
 uniform extern texture ShadowCube;
 uniform samplerCUBE ShadowCubeSampler = sampler_state { texture = <ShadowCube>; };
 
@@ -60,7 +56,7 @@ struct VertexShaderInput
 struct VertexShaderOutput
 {
     float4 Position			: POSITION0;
-    float4 WorldPosition    : TEXCOORD1;
+    float3 WorldPosition    : TEXCOORD1;
     float2 TexCoord			: TEXCOORD0;
 };
 
@@ -86,7 +82,7 @@ float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
     float4 ambient, diffuse, specular;
     float3 V = normalize(Viewpoint - input.WorldPosition);
     float3 L, H;
-    float attenuation, dist, A, D, S;
+    float attenuation, dist, lightDepth, A, D, S;
     
     for (int i = 0; i < NumLights; i++) {
 		ambient = 0.0f;
@@ -94,7 +90,17 @@ float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
 		specular = 0.0f;
 		attenuation = 1.0f;
 		
-		if (Lights[i].On) {
+		//Get vector to light source.
+		L =  Lights[i].Position.xyz - input.WorldPosition;
+		//Calculate distance to light.
+		dist  = distance(Lights[i].Position, input.WorldPosition);		
+		//Normalize L (we already have dist, so I'll just divide).
+		L = L / dist;
+		//Lookup depth value in shadow cube.
+		lightDepth = texCUBE(ShadowCubeSampler, -L);
+		
+		//If pixel is in shadow, do nothing.  Else color the pixel for this light.
+		if (Lights[i].On && dist <= lightDepth ) {
 			//Calculate light ray and half-angle.
 			/*if (Lights[i].IsPointLight) {
 				L =  Lights[i].Position - input.WorldPosition;
@@ -102,14 +108,9 @@ float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
 				L = -Lights[i].Direction;
 			}*/
 			
-			L =  Lights[i].Position - input.WorldPosition;
 			L = normalize(L);
-			
 			H = normalize(L+V);
 			 
-			//Calculate distance to light.
-			//dist  = distance(Lights[i].Position, input.WorldPosition);
-			
 			//Calculate diffuse, specular, and attenuation coefficients.								
 			D =		max(dot(normal, L), 0);
 			//S = pow(max(dot(normal, H), 0), Lights[i].Shininess);
@@ -128,14 +129,14 @@ float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
     return color * lightColor;
 }
 
-//Shadowing Mapping.
-struct ShadowVertexShaderOutput {
+//Depth Mapping.
+struct DepthVertexShaderOutput {
 	float4 Position	: POSITION0;
     float3 LightRay	: POSITION1;
 };
 
-ShadowVertexShaderOutput ShadowVertexShader(VertexShaderInput input) {
-	ShadowVertexShaderOutput output;
+DepthVertexShaderOutput DepthVertexShader(VertexShaderInput input) {
+	DepthVertexShaderOutput output;
 	
 	float4 worldPosition = mul(input.Position, World);
 	
@@ -145,7 +146,7 @@ ShadowVertexShaderOutput ShadowVertexShader(VertexShaderInput input) {
 	return output;
 }
 
-float4 ShadowFragmentShader(ShadowVertexShaderOutput input) : COLOR0 {
+float4 DepthFragmentShader(DepthVertexShaderOutput input) : COLOR0 {
     //These light rays SHOULD be interpolated, since I put them in POSITION1.
 	return length(input.LightRay);
 }
@@ -187,10 +188,10 @@ technique BumpMapped
     }
 }
 
-technique ShadowMapped {
-	pass Shadow {
-		VertexShader = compile vs_3_0 ShadowVertexShader();
-        PixelShader = compile ps_3_0 ShadowFragmentShader();
+technique DepthMapped {
+	pass Depth {
+		VertexShader = compile vs_3_0 DepthVertexShader();
+        PixelShader = compile ps_3_0 DepthFragmentShader();
 	}
 }
 
