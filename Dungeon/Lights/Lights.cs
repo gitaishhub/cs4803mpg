@@ -20,104 +20,140 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Content;
 
-namespace Dungeon.Lights
-{
+namespace Dungeon.Lights {
     /// <summary>
     /// This is a game component that implements IUpdateable.
     /// </summary>
-    public class Lights : Microsoft.Xna.Framework.GameComponent
-    {
+    public class Lights : Microsoft.Xna.Framework.GameComponent {
         public Vector4 position;
         public Int32 on;
         public Vector4 attenuation;
         public Vector4 lightDir;
         public int is_pointlight;
 
+        /// <summary>
+        /// The rendering cube for this light.  Used for omnidirectional lighting.
+        /// </summary>
+        public RenderTargetCube LightCube { get; set; }
 
-        public Lights(Game game)
-            : base(game)
-        {
-           
+        public Lights(Game game, int resolution)
+            : base(game) {
+            this.LightCube = new RenderTargetCube(game.GraphicsDevice, resolution, 1, SurfaceFormat.Single);
         }
 
-        public Vector4 LightDirection
-        {
-            get
-            {
+        public Vector4 LightDirection {
+            get {
                 return lightDir;
             }
-            set
-            {
+            set {
                 lightDir = value;
             }
         }
 
-        public int Is_PointLight
-        {
-            get
-            {
+        public int Is_PointLight {
+            get {
                 return is_pointlight;
             }
-            set
-            {
+            set {
                 is_pointlight = value;
             }
         }
 
-        public Vector4 Position
-        {
-            get
-            {
+        public Vector4 Position {
+            get {
                 return position;
             }
-            set
-            {
+            set {
                 position = value;
             }
         }
 
-        public void Flipped()
-        {
+        public void Flipped() {
             on = 1 - on;
         }
 
-        public Int32 Is_on
-        {
-            get
-            {
+        public Int32 Is_on {
+            get {
                 return on;
             }
-            set
-            {
+            set {
                 on = value;
             }
         }
 
-        public Vector4 Attenuation
-        {
-            get
-            {
+        public Vector4 Attenuation {
+            get {
                 return attenuation;
             }
-            set
-            {
+            set {
                 attenuation = value;
             }
         }
 
-        public override void Initialize()
-        {
-           
+        public override void Initialize() {
+
 
             base.Initialize();
         }
 
-        
-        public override void Update(GameTime gameTime)
-        {
+
+        public override void Update(GameTime gameTime) {
             // TODO: Add your update code here
 
             base.Update(gameTime);
+        }
+
+        //Converted from source on XNA forums.
+        //http://forums.create.msdn.com/forums/p/34789/210616.aspx
+        public Matrix GetViewMatrix(CubeMapFace face) {
+            /*Vector3[] dirs = new Vector3[6];
+            dirs[0] = Vector3.Right;
+            dirs[1] = Vector3.Left;
+            dirs[2] = Vector3.Up;
+            dirs[3] = Vector3.Down;
+            dirs[4] = Vector3.Forward;
+            dirs[5] = Vector3.Backward;
+
+            Vector3[] ups = new Vector3[6];
+            ups[0] = Vector3.Up;
+            ups[1] = Vector3.Up;
+            ups[2] = Vector3.Backward;
+            ups[3] = Vector3.Forward;
+            ups[4] = Vector3.Up;
+            ups[5] = Vector3.Up;
+
+            Vector3 pos = new Vector3(this.Position.X, this.Position.Y, this.Position.Z);
+            return Matrix.CreateLookAt(pos, pos + dirs[(int)face], ups[(int)face]);*/
+
+            Vector3 pos = new Vector3(this.Position.X, this.Position.Y, this.Position.Z);
+            Matrix viewMatrix = Matrix.Identity;
+            switch (face) {
+                case CubeMapFace.NegativeX: {
+                        viewMatrix = Matrix.CreateLookAt(pos, Vector3.Left, Vector3.Up);
+                        break;
+                    }
+                case CubeMapFace.NegativeY: {
+                        viewMatrix = Matrix.CreateLookAt(pos, Vector3.Down, Vector3.Forward);
+                        break;
+                    }
+                case CubeMapFace.NegativeZ: {
+                        viewMatrix = Matrix.CreateLookAt(pos, Vector3.Backward, Vector3.Up);
+                        break;
+                    }
+                case CubeMapFace.PositiveX: {
+                        viewMatrix = Matrix.CreateLookAt(pos, Vector3.Right, Vector3.Up);
+                        break;
+                    }
+                case CubeMapFace.PositiveY: {
+                        viewMatrix = Matrix.CreateLookAt(pos, Vector3.Up, Vector3.Backward);
+                        break;
+                    }
+                case CubeMapFace.PositiveZ: {
+                        viewMatrix = Matrix.CreateLookAt(pos, Vector3.Forward, Vector3.Up);
+                        break;
+                    }
+            }
+            return viewMatrix;
         }
     }
 }

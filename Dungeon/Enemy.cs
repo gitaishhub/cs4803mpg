@@ -21,7 +21,6 @@ namespace Dungeon
         private Matrix world;
         private Matrix rotation;
         private Model model;
-        public Effect Effect { get; set; }
 
         public Enemy(Game game)
             : base(game)
@@ -84,8 +83,24 @@ namespace Dungeon
 
         public override void Initialize()
         {
-            this.model = this.Game.Content.Load<Model>("Project4/Enemy/dino videogame");
             base.Initialize();
+        }
+
+        protected override void LoadContent() {
+            this.model = this.Game.Content.Load<Model>("Project4/Enemy/dino videogame");
+
+            //There has GOT to be a better way to do this.
+            /*this.effects = new BasicEffect[model.Meshes.Count][];
+            for (int i = 0; i < this.model.Meshes.Count; i++) {
+                ModelMesh mesh = this.model.Meshes[i];
+                this.effects[i] = new BasicEffect[mesh.Effects.Count];
+                
+                for (int j = 0; j < mesh.Effects.Count; j++) {
+                    this.effects[i][j] = (BasicEffect)mesh.Effects[j];
+                }
+            }
+            */
+            base.LoadContent();
         }
 
         public override void Update(GameTime gameTime)
@@ -145,6 +160,9 @@ namespace Dungeon
 
         public override void Draw(GameTime gameTime)
         {
+            //Load rendering effect.
+            //this.LoadBasicEffect();
+
             Matrix[] transforms = new Matrix[this.model.Bones.Count];
             this.model.CopyAbsoluteBoneTransformsTo(transforms);
 
@@ -162,5 +180,53 @@ namespace Dungeon
             }
             base.Draw(gameTime);
         }
+
+        public void DrawShadowEffect(GraphicsDevice device) {
+            Effect p4Effect = (this.Game as Game1).P4Effect;
+
+            Matrix[] transforms = new Matrix[this.model.Bones.Count];
+            this.model.CopyAbsoluteBoneTransformsTo(transforms);
+
+            foreach (ModelMesh mesh in this.model.Meshes) {
+                p4Effect.Parameters["World"].SetValue(transforms[mesh.ParentBone.Index] * this.rotation * this.world);
+
+                foreach (ModelMeshPart part in mesh.MeshParts) {
+                    device.VertexDeclaration = part.VertexDeclaration;
+                    device.Vertices[0].SetSource(mesh.VertexBuffer, 0, part.VertexStride);
+                    device.Indices = mesh.IndexBuffer;
+
+                    p4Effect.Begin();
+                    foreach (EffectPass pass in p4Effect.CurrentTechnique.Passes) {
+                        pass.Begin();
+                        device.DrawIndexedPrimitives(
+                            PrimitiveType.TriangleList,
+                            part.BaseVertex,
+                            0,
+                            part.NumVertices,
+                            part.StartIndex,
+                            part.PrimitiveCount);
+                        pass.End();
+                    }
+                    p4Effect.End();
+                }
+            }
+        }
+
+        /*private void LoadBasicEffect() {
+            //Again, this is so lame, but whatever.
+            for (int i = 0; i < this.model.Meshes.Count; i++) {
+                ModelMesh mesh = this.model.Meshes[i];
+
+                for (int j = 0; j < mesh.Effects.Count; j++) {
+                    mesh.MeshParts[j].Effect = this.effects[i][j];
+                }
+            }
+        }*/
+
+        /*private void LoadShadowEffect() {
+            foreach (ModelMesh mesh in this.model.Meshes)
+                foreach (ModelMeshPart meshPart in mesh.MeshParts)
+                    meshPart.Effect = (this.Game as Game1).P4Effect;
+        }*/
     }
 }

@@ -16,6 +16,7 @@ struct MaterialProperty {
 	float4 Specular;
 };
 
+//General variables.
 uniform extern float4x4 World;
 uniform extern float4x4 View;
 uniform extern float4x4 Projection;
@@ -24,6 +25,7 @@ uniform extern float4x4 VPInverse;
 uniform extern float4x4 previousVPInverse;
 uniform extern int numSamples;
 
+//Rendering variables.
 uniform extern Light Lights[4];
 uniform extern int NumLights;
 uniform extern MaterialProperty Material;
@@ -40,6 +42,14 @@ uniform sampler2D DiffuseSampler = sampler_state { texture = <Diffuse>; mipfilte
 uniform sampler2D NormalSampler = sampler_state { texture = <Normal>; mipfilter = LINEAR; };
 uniform sampler2D SpecularSampler = sampler_state { texture = <Specular>; mipfilter = LINEAR; };
 
+//Shadowing variables.
+uniform extern float4x4 LightView;
+uniform extern float4x4 LightProjection;
+uniform extern int LightIndex;
+
+uniform extern texture ShadowCube;
+uniform samplerCUBE ShadowCubeSampler = sampler_state { texture = <ShadowCube>; };
+
 struct VertexShaderInput
 {
     float4 Position : POSITION0;
@@ -50,11 +60,11 @@ struct VertexShaderInput
 struct VertexShaderOutput
 {
     float4 Position			: POSITION0;
-    float3 WorldPosition    : TEXCOORD1;
+    float4 WorldPosition    : TEXCOORD1;
     float2 TexCoord			: TEXCOORD0;
 };
 
-VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
+VertexShaderOutput VertexShader(VertexShaderInput input)
 {
     VertexShaderOutput output;
     
@@ -65,7 +75,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
     return output;
 }
 
-float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
+float4 BumpFragmentShader(VertexShaderOutput input) : COLOR0
 {
 	//Lookup normal from texture.   
     float3 normal = tex2D(NormalSampler, input.TexCoord);
@@ -118,6 +128,29 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     return color * lightColor;
 }
 
+//Shadowing Mapping.
+struct ShadowVertexShaderOutput {
+	float4 Position	: POSITION0;
+    float3 LightRay	: POSITION1;
+};
+
+ShadowVertexShaderOutput ShadowVertexShader(VertexShaderInput input) {
+	ShadowVertexShaderOutput output;
+	
+	float4 worldPosition = mul(input.Position, World);
+	
+	output.Position = mul(mul(worldPosition, View), Projection);
+	output.LightRay = -worldPosition;
+	
+	return output;
+}
+
+float4 ShadowFragmentShader(ShadowVertexShaderOutput input) : COLOR0 {
+    //These light rays SHOULD be interpolated, since I put them in POSITION1.
+	return length(input.LightRay);
+}
+
+//Motion Blurring.
 float4 MotionBlurPixel(VertexShaderOutput input) : COLOR0
 {
 	//Get depth buffer value at pixel.
@@ -149,20 +182,22 @@ technique BumpMapped
 {
     pass Bump
     {
-        // TODO: set renderstates here.
-
-        VertexShader = compile vs_3_0 VertexShaderFunction();
-        PixelShader = compile ps_3_0 PixelShaderFunction();
+        VertexShader = compile vs_3_0 VertexShader();
+        PixelShader = compile ps_3_0 BumpFragmentShader();
     }
+}
+
+technique ShadowMapped {
+	pass Shadow {
+		VertexShader = compile vs_3_0 ShadowVertexShader();
+        PixelShader = compile ps_3_0 ShadowFragmentShader();
+	}
 }
 
 technique MotionBlur
 {
     pass Motion
     {
-        // TODO: set renderstates here.
-
-        VertexShader = compile vs_3_0 VertexShaderFunction();
         PixelShader = compile ps_3_0 MotionBlurPixel();
     }
 }
