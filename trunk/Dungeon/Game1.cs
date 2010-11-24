@@ -48,7 +48,8 @@ namespace Dungeon {
         public Matrix lightProjectionMatrix;
         private Vector3 spin;
 
-        private RenderTarget2D motionTarget;
+        private RenderTarget2D sceneTarget;
+        private RenderTarget2D depthTarget;
         public Effect P4Effect { get; set; }
 
         public Game1() {
@@ -225,7 +226,7 @@ namespace Dungeon {
             projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
                     MathHelper.ToRadians(45),
                     (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height,
-                    0.1f, 5000.0f);
+                    1f, 1024f);
 
             //Setup the view matrix for shadow mapping.
             this.lightProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1, 0.1f, 1024f);
@@ -272,8 +273,8 @@ namespace Dungeon {
             //teapot[1].TeapotEffect = Content.Load<Effect>("DungeonEffect");
             //teapot[1].TeapotEffect.CurrentTechnique = teapot[1].TeapotEffect.Techniques["myTech"];
 
-            this.motionTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
-            //this.depthBuffer = new DepthStencilBuffer(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, DepthFormat.Depth32);
+            this.sceneTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
+            this.depthTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height, 1, GraphicsDevice.DisplayMode.Format);
 
             base.LoadContent();
         }
@@ -376,17 +377,12 @@ namespace Dungeon {
             this.SendDataToShaders();
 
             #region DepthBuffer Rendering
-            //Set depth buffer comparign to less.
-            this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
-            
-
-
             //Render the scene for each light.
             this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["DepthMapped"];
             this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
             this.P4Effect.Parameters["Projection"].SetValue(this.lightProjectionMatrix);
             //this.P4Effect.Parameters["LightIndex"].SetValue(0);
-            
+
             this.GraphicsDevice.Clear(Color.TransparentBlack);
 
             //The values 0-5 are the int casts of the enumerations CubeMapFace.  Basically, this saves typing.
@@ -401,41 +397,24 @@ namespace Dungeon {
                 this.masterRoom.DrawFloor();
                 this.enemy.DrawShadowEffect(this.GraphicsDevice);
             }
-
-
-
-
-            //this.P4Effect.Parameters["LightView"].SetValue(LiteSource[0].GetViewMatrix(CubeMapFace.NegativeY));
-
             
+            //Render depth buffer for camera.
+            this.GraphicsDevice.SetRenderTarget(0, this.depthTarget);
 
-            /*foreach(AmbDiffSpecLights light in this.LiteSource) {
-                if (light.Is_on == 0) { continue; }
-
-                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.NegativeX);
-
-                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.NegativeY);
-
-                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.NegativeZ);
-
-                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveX);
-
-                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveY);
-
-                this.GraphicsDevice.SetRenderTarget(0, light.LightCube, CubeMapFace.PositiveZ);
-            }*/
-            //Reset the world matrix.
             this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
-            //Release render target, so we can read from it.
-            this.GraphicsDevice.SetRenderTarget(0, null);
-            //Reset depth buffer comparison.
-            this.GraphicsDevice.RenderState.DepthBufferFunction = CompareFunction.LessEqual;
+            this.P4Effect.Parameters["View"].SetValue(this.viewMatrix);
+            this.P4Effect.Parameters["Projection"].SetValue(this.projectionMatrix);
+
+            this.GraphicsDevice.Clear(Color.TransparentBlack);
+            this.masterRoom.DrawFloor();
+            this.enemy.DrawShadowEffect(this.GraphicsDevice);
 
             #endregion
 
             #region SceneRendering
             //Set effect to scene rendering.
             this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["BumpMapped"];
+            this.P4Effect.Parameters["World"].SetValue(Matrix.Identity);
             this.P4Effect.Parameters["View"].SetValue(this.viewMatrix);
             this.P4Effect.Parameters["Projection"].SetValue(this.projectionMatrix);
 
@@ -443,7 +422,7 @@ namespace Dungeon {
             this.P4Effect.Parameters["ShadowCube"].SetValue(LiteSource[0].LightCube.GetTexture());
 
             //Set render target.
-            this.GraphicsDevice.SetRenderTarget(0, this.motionTarget);
+            this.GraphicsDevice.SetRenderTarget(0, this.sceneTarget);
 
             graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
@@ -452,18 +431,21 @@ namespace Dungeon {
             #endregion
 
             #region PostProcessing
+            //Reset render target.
+            this.GraphicsDevice.SetRenderTarget(0, null);
+            
+            this.P4Effect.CurrentTechnique = this.P4Effect.Techniques["MotionBlurred"];
+
+            
+            //Finally put shit on screen.
+            this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
+            this.spriteBatch.Draw(this.sceneTarget.GetTexture(), Vector2.Zero, Color.White);
+
+            this.spriteBatch.End();
 
             #endregion
 
-            //Reset render target.
-            this.GraphicsDevice.SetRenderTarget(0, null);
-            //Finally put shit on screen.
-            this.spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.SaveState);
-            this.spriteBatch.Draw(this.motionTarget.GetTexture(), Vector2.Zero, Color.White);
 
-            //this.spriteBatch.Draw(tex, Vector2.Zero, Color.White);
-
-            this.spriteBatch.End();
         }
 
         private void SendDataToShaders() {
