@@ -10,8 +10,8 @@
 
 #region Using Statements
 using System;
-using System.Threading; // added for threads
 using System.Collections.Generic;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Audio;
@@ -25,8 +25,8 @@ namespace Spacewar
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    partial class SpacewarGame : Microsoft.Xna.Framework.Game
-    {
+    partial class SpacewarGame : Microsoft.Xna.Framework.Game {
+        #region Private Variables
         // these are the size of the offscreen drawing surface
         // in general, no one wants to change these as there
         // are all kinds of UI calculations and positions based
@@ -81,6 +81,13 @@ namespace Spacewar
 
         private static KeyboardState keyState;
 //        private bool justWentFullScreen;
+        #endregion
+
+        //Our threads, one for logic updating, and one for sound.
+        private Thread updateThread;
+        private Thread soundThread;
+
+
 
         #region Properties
         public static GameState GameState
@@ -216,32 +223,59 @@ namespace Spacewar
 
             ////////////////////////////////////////////////////////////////////////
             // start threads here
+            ThreadStart updateStart = new ThreadStart(this.UpdateMTStart);
+            this.updateThread = new Thread(updateStart);
 
+            ThreadStart soundStart = new ThreadStart(this.UpdateSoundMTStart);
+            this.soundThread = new Thread(soundStart);
+
+            //Not yet, unless you want epic badness.
+            
+            //this.updateThread.Start();
+            //this.soundThread.Start();
+            
 
             base.BeginRun();
+        }
+
+        private void UpdateSoundMTStart() {
+#if XBOX360  // stuff specific to xBox
+            Thread.CurrentThread.SetProcessorAffinity(5);
+#endif
+
+            while (true) {
+                this.UpdateSoundMT();
+            }
         }
 
         /// <summary>
         /// Thread for updating the sound every frame
         /// </summary>
-        void UpdateSoundMT()
+        public void UpdateSoundMT()
         {
-#if XBOX360  // stuff specific to xBox
-            Thread.CurrentThread.SetProcessorAffinity(5);
-#endif
-
             Sound.Update();
+        }
 
+        private void UpdateMTStart() {
+#if XBOX360  // stuff specific to xBox
+            Thread.CurrentThread.SetProcessorAffinity(3);
+
+            while (true) {
+                this.UpdateMT(new GameTime());
+            }
+#endif
         }
 
         /// <summary>
         /// Multi-threaded Update()
         /// </summary>
-        void UpdateMT()
+        private void UpdateMT(GameTime gameTime)
         {
-#if XBOX360  // stuff specific to xBox
-            Thread.CurrentThread.SetProcessorAffinity(3);
-#endif
+            TimeSpan elapsedTime = gameTime.ElapsedGameTime;
+            TimeSpan time = gameTime.TotalGameTime;
+
+            // The time since Update was called last
+            float elapsed = (float)elapsedTime.TotalSeconds;
 
             GameState changeState = GameState.None;
 
@@ -283,6 +317,16 @@ namespace Spacewar
                     ChangeState(changeState);
                 }
             }
+
+            base.Update(gameTime);
+        }
+
+        protected override void EndRun() {
+            //Close out the update and sound threads.
+            //this.updateThread.Abort();
+            //this.soundThread.Abort();
+            
+            base.EndRun();
         }
 
         protected override void Update(GameTime gameTime)
@@ -357,7 +401,7 @@ namespace Spacewar
                 }
             }
 */
-            base.Update(gameTime);
+            //base.Update(gameTime);
         }
 
         protected override bool BeginDraw()
