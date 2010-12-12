@@ -86,9 +86,12 @@ namespace Spacewar
         //Our threads, one for logic updating, and one for sound.
         private Thread updateThread;
         private Thread soundThread;
+        private GameTime gameTime;
+        private GameTime oldGameTime;
+        private Boolean updateSound;
 
 
-
+        
         #region Properties
         public static GameState GameState
         {
@@ -253,26 +256,36 @@ namespace Spacewar
         /// </summary>
         public void UpdateSoundMT()
         {
-            Sound.Update();
+            if (updateSound == true)
+            {
+                Sound.Update();
+                updateSound = false;
+            }
         }
 
         private void UpdateMTStart() {
 #if XBOX360  // stuff specific to xBox
             Thread.CurrentThread.SetProcessorAffinity(3);
-
-            while (true) {
-                this.UpdateMT(new GameTime());
-            }
 #endif
+            while (true) {
+                this.UpdateMT();
+            }
         }
 
         /// <summary>
         /// Multi-threaded Update()
         /// </summary>
-        private void UpdateMT(GameTime gameTime)
+        private void UpdateMT()
         {
-            TimeSpan elapsedTime = gameTime.ElapsedGameTime;
-            TimeSpan time = gameTime.TotalGameTime;
+            if (oldGameTime.Equals(gameTime))
+            {
+                return;
+            }
+
+            updateSound = true;
+
+            TimeSpan elapsedTime = this.gameTime.ElapsedGameTime;
+            TimeSpan time = this.gameTime.TotalGameTime;
 
             // The time since Update was called last
             float elapsed = (float)elapsedTime.TotalSeconds;
@@ -318,7 +331,10 @@ namespace Spacewar
                 }
             }
 
-            base.Update(gameTime);
+            // store current game time
+            oldGameTime = gameTime;
+
+            base.Update(this.gameTime);
         }
 
         protected override void EndRun() {
@@ -329,8 +345,9 @@ namespace Spacewar
             base.EndRun();
         }
 
-        protected override void Update(GameTime gameTime)
+        protected override void Update(GameTime gTime)
         {
+            this.gameTime = gTime;
 /*
             TimeSpan elapsedTime = gameTime.ElapsedGameTime;
             TimeSpan time = gameTime.TotalGameTime;
