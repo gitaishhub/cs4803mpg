@@ -1,3 +1,4 @@
+
 #region File Description
 //-----------------------------------------------------------------------------
 // SpacewarGame.cs
@@ -9,6 +10,7 @@
 
 #region Using Statements
 using System;
+using System.Threading; // added for threads
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -78,7 +80,7 @@ namespace Spacewar
         private static PlatformID currentPlatform;
 
         private static KeyboardState keyState;
-        private bool justWentFullScreen;
+//        private bool justWentFullScreen;
 
         #region Properties
         public static GameState GameState
@@ -212,32 +214,39 @@ namespace Spacewar
             camera = new Camera(fieldOfView, aspectRatio, nearPlane, farPlane);
             camera.ViewPosition = new Vector3(0, 0, 500);
 
+            ////////////////////////////////////////////////////////////////////////
+            // start threads here
+
+
             base.BeginRun();
         }
 
-        protected override void Update(GameTime gameTime)
+        /// <summary>
+        /// Thread for updating the sound every frame
+        /// </summary>
+        void UpdateSoundMT()
         {
-            TimeSpan elapsedTime = gameTime.ElapsedGameTime;
-            TimeSpan time = gameTime.TotalGameTime;
+#if XBOX360  // stuff specific to xBox
+            Thread.CurrentThread.SetProcessorAffinity(5);
+#endif
 
-            // The time since Update was called last
-            float elapsed = (float)elapsedTime.TotalSeconds;
+            Sound.Update();
+
+        }
+
+        /// <summary>
+        /// Multi-threaded Update()
+        /// </summary>
+        void UpdateMT()
+        {
+#if XBOX360  // stuff specific to xBox
+            Thread.CurrentThread.SetProcessorAffinity(3);
+#endif
 
             GameState changeState = GameState.None;
 
             keyState = Keyboard.GetState();
             XInputHelper.Update(this, keyState);
-
-            if ((keyState.IsKeyDown(Keys.RightAlt) || keyState.IsKeyDown(Keys.LeftAlt)) && keyState.IsKeyDown(Keys.Enter) && !justWentFullScreen)
-            {
-                ToggleFullScreen();
-                justWentFullScreen = true;
-            }
-
-            if (keyState.IsKeyUp(Keys.Enter))
-            {
-                justWentFullScreen = false;
-            }
 
             if (XInputHelper.GamePads[PlayerIndex.One].BackPressed ||
                 XInputHelper.GamePads[PlayerIndex.Two].BackPressed)
@@ -253,13 +262,80 @@ namespace Spacewar
                 }
             }
 
+            if (!paused)
+            {
+                // Update the AudioEngine - MUST call this every frame!!
+                // create new thread here
+                //Sound.Update();
+
+                //Update everything
+                changeState = currentScreen.Update(time, elapsedTime);
+
+                //If either player presses start then reset the game
+                if (XInputHelper.GamePads[PlayerIndex.One].StartPressed ||
+                    XInputHelper.GamePads[PlayerIndex.Two].StartPressed)
+                {
+                    changeState = GameState.LogoSplash;
+                }
+
+                if (changeState != GameState.None)
+                {
+                    ChangeState(changeState);
+                }
+            }
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+/*
+            TimeSpan elapsedTime = gameTime.ElapsedGameTime;
+            TimeSpan time = gameTime.TotalGameTime;
+
+            // The time since Update was called last
+            float elapsed = (float)elapsedTime.TotalSeconds;
+
+            GameState changeState = GameState.None;
+
+            keyState = Keyboard.GetState();
+            XInputHelper.Update(this, keyState);
+*/
+/*
+            if ((keyState.IsKeyDown(Keys.RightAlt) || keyState.IsKeyDown(Keys.LeftAlt)) && keyState.IsKeyDown(Keys.Enter) && !justWentFullScreen)
+            {
+                ToggleFullScreen();
+                justWentFullScreen = true;
+            }
+
+            if (keyState.IsKeyUp(Keys.Enter))
+            {
+                justWentFullScreen = false;
+            }
+*/
+/*
+
+            if (XInputHelper.GamePads[PlayerIndex.One].BackPressed ||
+                XInputHelper.GamePads[PlayerIndex.Two].BackPressed)
+            {
+                if (gameState == GameState.PlayEvolved || gameState == GameState.PlayRetro)
+                {
+                    paused = !paused;
+                }
+
+                if (gameState == GameState.LogoSplash)
+                {
+                    this.Exit();
+                }
+            }
+*/
+/*
             //Reload settings file?
             if (XInputHelper.GamePads[PlayerIndex.One].YPressed)
             {
                 //settings = Settings.Load("settings.xml");
                 //GC.Collect();
             }
-
+*/
+/*
             if (!paused)
             {
                 //Update everything
@@ -280,7 +356,7 @@ namespace Spacewar
                     ChangeState(changeState);
                 }
             }
-
+*/
             base.Update(gameTime);
         }
 
