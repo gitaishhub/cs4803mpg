@@ -164,7 +164,8 @@ namespace Spacewar {
             this.graphics.PreparingDeviceSettings += new EventHandler<PreparingDeviceSettingsEventArgs>(PreparingDeviceSettings);
 
             // Game should run as fast as possible.
-            IsFixedTimeStep = false;
+            IsFixedTimeStep = true;
+            TargetElapsedTime = TimeSpan.FromSeconds(1 / 60f);
         }
 
         void PreparingDeviceSettings(object sender, PreparingDeviceSettingsEventArgs e) {
@@ -322,7 +323,7 @@ namespace Spacewar {
             //the game to read in one state and write to another state would involve
             //a lot of fundamental changes beyond the scope of this project as all of
             //the game components edit their own values on each update.
-            this.drawingScreen = this.DeepClone<Screen>(this.currentScreen);
+            this.drawingScreen = this.currentScreen;
         }
 
         protected override void Update(GameTime gTime) {
@@ -398,18 +399,6 @@ namespace Spacewar {
             //}
 
             //base.Update(gameTime);
-        }
-
-        //Pulled from StackOverflow
-        //http://stackoverflow.com/questions/129389/how-do-you-do-a-deep-copy-an-object-in-net-c-specifically
-        private T DeepClone<T>(T obj) {
-            using (var ms = new MemoryStream()) {
-                var formatter = new BinaryFormatter();
-                formatter.Serialize(ms, obj);
-                ms.Position = 0;
-
-                return (T)formatter.Deserialize(ms);
-            }
         }
 
         protected override bool BeginDraw() {
