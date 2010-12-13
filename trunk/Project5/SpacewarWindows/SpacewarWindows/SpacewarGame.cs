@@ -10,6 +10,8 @@
 #region Using Statements
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -19,13 +21,11 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 #endregion
 
-namespace Spacewar
-{
+namespace Spacewar {
     /// <summary>
     /// This is the main type for your game
     /// </summary>
-    partial class SpacewarGame : Microsoft.Xna.Framework.Game
-    {
+    partial class SpacewarGame : Microsoft.Xna.Framework.Game {
         // these are the size of the offscreen drawing surface
         // in general, no one wants to change these as there
         // are all kinds of UI calculations and positions based
@@ -78,16 +78,16 @@ namespace Spacewar
         private static PlatformID currentPlatform;
 
         private static KeyboardState keyState;
-//        private bool justWentFullScreen;
+        //        private bool justWentFullScreen;
         #endregion
 
         /// ///////////////////////////////////////////////
         /// Added for multi-threading
         private Thread soundThread;
         private Thread updateThread;
-        private Boolean justUpdated;
-        private GameTime gameTime;
-        private GameTime oldGameTime;
+        private GameTime timeStamp;
+        private bool update;
+        private bool play;
 
         //Thank god this code is reasonably structured.
         private Screen currentScreen;
@@ -96,77 +96,59 @@ namespace Spacewar
         #region Properties
 
 
-        public static GameState GameState
-        {
-            get
-            {
+        public static GameState GameState {
+            get {
                 return gameState;
             }
         }
 
-        public static int GameLevel
-        {
-            get
-            {
+        public static int GameLevel {
+            get {
                 return gameLevel;
             }
-            set
-            {
+            set {
                 gameLevel = value;
             }
         }
 
-        public static Camera Camera
-        {
-            get
-            {
+        public static Camera Camera {
+            get {
                 return camera;
             }
         }
 
-        public static Settings Settings
-        {
-            get
-            {
+        public static Settings Settings {
+            get {
                 return settings;
             }
         }
 
-        public static Player[] Players
-        {
-            get
-            {
+        public static Player[] Players {
+            get {
                 return players;
             }
         }
 
-        public static ContentManager ContentManager
-        {
-            get
-            {
+        public static ContentManager ContentManager {
+            get {
                 return contentManager;
             }
         }
 
-        public static PlatformID CurrentPlatform
-        {
-            get
-            {
+        public static PlatformID CurrentPlatform {
+            get {
                 return currentPlatform;
             }
         }
 
-        public static KeyboardState KeyState
-        {
-            get
-            {
+        public static KeyboardState KeyState {
+            get {
                 return keyState;
             }
         }
         #endregion
 
-        public SpacewarGame()
-        {
+        public SpacewarGame() {
 #if XBOX360
             // we might as well use the xbox in all its glory
             preferredWindowWidth = FixedDrawingWidth;
@@ -185,15 +167,13 @@ namespace Spacewar
             IsFixedTimeStep = false;
         }
 
-        void PreparingDeviceSettings(object sender, PreparingDeviceSettingsEventArgs e)
-        {
+        void PreparingDeviceSettings(object sender, PreparingDeviceSettingsEventArgs e) {
             // We turn off auto depth buffer creation when scaling output.
             //
             e.GraphicsDeviceInformation.PresentationParameters.EnableAutoDepthStencil = !enableDrawScaling;
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             // game initialization code here
 
             //Uncomment this line to force a save of the default settings file. Useful when you had added things to settings.cs
@@ -209,22 +189,17 @@ namespace Spacewar
 
             Window.Title = Settings.WindowTitle;
 
-            // //////////////////////////////
-            // stuff for multi-threading
-            gameTime = new GameTime();
-            oldGameTime = new GameTime();
-            justUpdated = false;
-            
-
             base.Initialize();
         }
 
-        protected override void BeginRun()
-        {
+        protected override void BeginRun() {
             Sound.PlayCue(Sounds.TitleMusic);
 
             //Kick off the game by loading the logo splash screen
             ChangeState(GameState.LogoSplash);
+            
+            //Make a reference copy so that drawingScreen doesn't start out as null.
+            this.drawingScreen = this.currentScreen;
 
             float fieldOfView = (float)Math.PI / 4;
             float aspectRatio = (float)FixedDrawingWidth / (float)FixedDrawingHeight;
@@ -245,38 +220,46 @@ namespace Spacewar
             base.BeginRun();
         }
 
-        protected override void EndRun()
-        {
+        protected override void EndRun() {
             // //////////////////////////////////
-            // kill threads
+            // kill threads *stabby, stabby*
             soundThread.Abort();
             updateThread.Abort();
         }
 
-        private void soundMT()
-        {
-            // Update the AudioEngine - MUST call this every frame!!
-            Sound.Update();
-        }
-
-        private void startSoundMT()
-        {
+        private void startSoundMT() {
 #if XBOX360
             // set thread affinity
             Thread.CurrentThread.SetProcessorAffinity(3);
 #endif
-            while (true)
-            {
-                if (justUpdated == true)
-                {
+            while (true) {
+                if (this.play) {
                     soundMT();
-                    justUpdated = false;
+                    this.play = false;
+                }
+            }
+        }
+        private void soundMT() {
+            // Update the AudioEngine - MUST call this every frame!!
+            Sound.Update();
+        }
+
+
+
+        private void startUpdateMT() {
+#if XBOX360
+            // set thread affinity
+            Thread.CurrentThread.SetProcessorAffinity(5);
+#endif
+            while (true) {
+                if (update) {
+                    updateMT(timeStamp);
+                    update = false;
                 }
             }
         }
 
-        private void updateMT()
-        {
+        private void updateMT(GameTime gameTime) {
             // everything to update goes in here
             TimeSpan elapsedTime = gameTime.ElapsedGameTime;
             TimeSpan time = gameTime.TotalGameTime;
@@ -301,68 +284,54 @@ namespace Spacewar
             }
             */
             if (XInputHelper.GamePads[PlayerIndex.One].BackPressed ||
-                XInputHelper.GamePads[PlayerIndex.Two].BackPressed)
-            {
-                if (gameState == GameState.PlayEvolved || gameState == GameState.PlayRetro)
-                {
+                XInputHelper.GamePads[PlayerIndex.Two].BackPressed) {
+                if (gameState == GameState.PlayEvolved || gameState == GameState.PlayRetro) {
                     paused = !paused;
                 }
 
-                if (gameState == GameState.LogoSplash)
-                {
+                if (gameState == GameState.LogoSplash) {
                     this.Exit();
                 }
             }
 
             //Reload settings file?
-            if (XInputHelper.GamePads[PlayerIndex.One].YPressed)
-            {
+            if (XInputHelper.GamePads[PlayerIndex.One].YPressed) {
                 //settings = Settings.Load("settings.xml");
                 //GC.Collect();
             }
 
-            if (!paused)
-            {
+            if (!paused) {
                 //Update everything
                 changeState = currentScreen.Update(time, elapsedTime);
 
                 //If either player presses start then reset the game
                 if (XInputHelper.GamePads[PlayerIndex.One].StartPressed ||
-                    XInputHelper.GamePads[PlayerIndex.Two].StartPressed)
-                {
+                    XInputHelper.GamePads[PlayerIndex.Two].StartPressed) {
                     changeState = GameState.LogoSplash;
                 }
 
-                if (changeState != GameState.None)
-                {
+                if (changeState != GameState.None) {
                     ChangeState(changeState);
                 }
             }
 
             base.Update(gameTime);
+
+            //Update finished, make a copy for the drawing code.
+            //This is certainly not the proper way to do this.  However, refactoring
+            //the game to read in one state and write to another state would involve
+            //a lot of fundamental changes beyond the scope of this project as all of
+            //the game components edit their own values on each update.
+            this.drawingScreen = this.DeepClone<Screen>(this.currentScreen);
         }
 
-        private void startUpdateMT()
-        {
-#if XBOX360
-            // set thread affinity
-            Thread.CurrentThread.SetProcessorAffinity(5);
-#endif
-            while (true)
-            {
-                if (gameTime.Equals(oldGameTime))
-                {
-                    continue;
-                }
-                updateMT();
-                oldGameTime = gameTime;
-            }
-        }
+        protected override void Update(GameTime gTime) {
+            //Set this first, to prevent the other threads from getting a nanosecond head start.
+            this.timeStamp = gTime;
 
-        protected override void Update(GameTime gTime)
-        {
-            justUpdated = true;
-            gameTime = gTime;
+            //Set flags for other threads to step.
+            this.update = true;
+            this.play = true;
 
             //TimeSpan elapsedTime = gameTime.ElapsedGameTime;
             //TimeSpan time = gameTime.TotalGameTime;
@@ -431,8 +400,19 @@ namespace Spacewar
             //base.Update(gameTime);
         }
 
-        protected override bool BeginDraw()
-        {
+        //Pulled from StackOverflow
+        //http://stackoverflow.com/questions/129389/how-do-you-do-a-deep-copy-an-object-in-net-c-specifically
+        private T DeepClone<T>(T obj) {
+            using (var ms = new MemoryStream()) {
+                var formatter = new BinaryFormatter();
+                formatter.Serialize(ms, obj);
+                ms.Position = 0;
+
+                return (T)formatter.Deserialize(ms);
+            }
+        }
+
+        protected override bool BeginDraw() {
             if (!base.BeginDraw())
                 return false;
 
@@ -441,35 +421,29 @@ namespace Spacewar
             return true;
         }
 
-        protected override void Draw(GameTime gameTime)
-        {
+        protected override void Draw(GameTime gameTime) {
             graphics.GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.CornflowerBlue, 1.0f, 0);
 
             base.Draw(gameTime);
 
-            currentScreen.Render();
+            this.drawingScreen.Render();
         }
 
-        protected override void EndDraw()
-        {
+        protected override void EndDraw() {
             EndDrawScaling();
 
             base.EndDraw();
         }
 
-        internal void ChangeState(GameState NextState)
-        {
+        internal void ChangeState(GameState NextState) {
             //Logo spash can come from ANY state since its the place you go when you restart
-            if (NextState == GameState.LogoSplash)
-            {
+            if (NextState == GameState.LogoSplash) {
                 if (currentScreen != null)
                     currentScreen.Shutdown();
 
                 currentScreen = new TitleScreen(this);
                 gameState = GameState.LogoSplash;
-            }
-            else if (gameState == GameState.LogoSplash && NextState == GameState.ShipSelection)
-            {
+            } else if (gameState == GameState.LogoSplash && NextState == GameState.ShipSelection) {
                 Sound.PlayCue(Sounds.MenuAdvance);
 
                 //This is really where the game starts so setup the player information
@@ -481,46 +455,35 @@ namespace Spacewar
                 currentScreen.Shutdown();
                 currentScreen = new SelectionScreen(this);
                 gameState = GameState.ShipSelection;
-            }
-            else if (gameState == GameState.PlayEvolved && NextState == GameState.ShipUpgrade)
-            {
+            } else if (gameState == GameState.PlayEvolved && NextState == GameState.ShipUpgrade) {
                 currentScreen.Shutdown();
                 currentScreen = new ShipUpgradeScreen(this);
                 gameState = GameState.ShipUpgrade;
-            }
-            else if ((gameState == GameState.ShipSelection || GameState == GameState.ShipUpgrade) && NextState == GameState.PlayEvolved)
-            {
+            } else if ((gameState == GameState.ShipSelection || GameState == GameState.ShipUpgrade) && NextState == GameState.PlayEvolved) {
                 Sound.PlayCue(Sounds.MenuAdvance);
 
                 currentScreen.Shutdown();
                 currentScreen = new EvolvedScreen(this);
                 gameState = GameState.PlayEvolved;
-            }
-            else if (gameState == GameState.LogoSplash && NextState == GameState.PlayRetro)
-            {
+            } else if (gameState == GameState.LogoSplash && NextState == GameState.PlayRetro) {
                 //Game starts here for retro
                 players = new Player[2] { new Player(), new Player() };
 
                 currentScreen.Shutdown();
                 currentScreen = new RetroScreen(this);
                 gameState = GameState.PlayRetro;
-            }
-            else if (gameState == GameState.PlayEvolved && NextState == GameState.Victory)
-            {
+            } else if (gameState == GameState.PlayEvolved && NextState == GameState.Victory) {
                 currentScreen.Shutdown();
                 currentScreen = new VictoryScreen(this);
                 gameState = GameState.Victory;
-            }
-            else
-            {
+            } else {
                 //This is a BAD thing and should never happen
                 // What does this map to on XBox 360?
                 //Debug.Assert(false, String.Format("Invalid State transition {0} to {1}", gameState.ToString(), NextState.ToString()));
             }
         }
 
-        protected override void LoadContent()
-        {
+        protected override void LoadContent() {
             base.LoadContent();
 
             contentManager = new ContentManager(Services);
@@ -530,8 +493,7 @@ namespace Spacewar
 
             Font.Init(this);
 
-            if (enableDrawScaling)
-            {
+            if (enableDrawScaling) {
                 PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
                 drawBuffer = new RenderTarget2D(graphics.GraphicsDevice,
@@ -548,49 +510,40 @@ namespace Spacewar
             }
         }
 
-        protected override void UnloadContent()
-        {
+        protected override void UnloadContent() {
             base.UnloadContent();
 
-            if (drawDepthBuffer != null)
-            {
+            if (drawDepthBuffer != null) {
                 drawDepthBuffer.Dispose();
                 drawDepthBuffer = null;
             }
 
-            if (drawBuffer != null)
-            {
+            if (drawBuffer != null) {
                 drawBuffer.Dispose();
                 drawBuffer = null;
             }
 
-            if (spriteBatch != null)
-            {
+            if (spriteBatch != null) {
                 spriteBatch.Dispose();
                 spriteBatch = null;
             }
 
             Font.Dispose();
 
-            if (contentManager != null)
-            {
+            if (contentManager != null) {
                 contentManager.Dispose();
                 contentManager = null;
             }
 
         }
 
-        private void ToggleFullScreen()
-        {
+        private void ToggleFullScreen() {
             PresentationParameters presentation = graphics.GraphicsDevice.PresentationParameters;
 
-            if (presentation.IsFullScreen)
-            {   // going windowed
+            if (presentation.IsFullScreen) {   // going windowed
                 graphics.PreferredBackBufferWidth = preferredWindowWidth;
                 graphics.PreferredBackBufferHeight = preferredWindowHeight;
-            }
-            else
-            {
+            } else {
                 // going fullscreen, use desktop resolution to minimize display mode changes
                 // this also has the nice effect of working around some displays that lie about 
                 // supporting 1280x720
@@ -602,19 +555,16 @@ namespace Spacewar
             graphics.ToggleFullScreen();
         }
 
-        private void BeginDrawScaling()
-        {
+        private void BeginDrawScaling() {
             PresentationParameters presentation = graphics.GraphicsDevice.PresentationParameters;
 
-            if (enableDrawScaling && drawBuffer != null)
-            {
+            if (enableDrawScaling && drawBuffer != null) {
                 graphics.GraphicsDevice.SetRenderTarget(0, drawBuffer);
                 graphics.GraphicsDevice.DepthStencilBuffer = drawDepthBuffer;
             }
         }
 
-        private void EndDrawScaling()
-        {
+        private void EndDrawScaling() {
             // copy our offscreen surface to the backbuffer with appropriate
             // letterbox bars
 
@@ -636,17 +586,14 @@ namespace Spacewar
 
             Rectangle dst;
 
-            if (outputAspect <= preferredAspect)
-            {
+            if (outputAspect <= preferredAspect) {
                 // output is taller than it is wider, bars on top/bottom
 
                 int presentHeight = (int)((presentation.BackBufferWidth / preferredAspect) + 0.5f);
                 int barHeight = (presentation.BackBufferHeight - presentHeight) / 2;
 
                 dst = new Rectangle(0, barHeight, presentation.BackBufferWidth, presentHeight);
-            }
-            else
-            {
+            } else {
                 // output is wider than it is tall, bars left/right
 
                 int presentWidth = (int)((presentation.BackBufferHeight * preferredAspect) + 0.5f);
