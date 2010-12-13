@@ -32,6 +32,7 @@ namespace Spacewar
         const int FixedDrawingWidth = 1280;
         const int FixedDrawingHeight = 720;
 
+        #region Private Variables
         // these are the size of the output window, ignored
         // on Xbox 360
         private int preferredWindowWidth = 1280;
@@ -73,12 +74,15 @@ namespace Spacewar
         private DepthStencilBuffer drawDepthBuffer;
         private SpriteBatch spriteBatch;
 
-        private static Screen currentScreen;
+        private Screen currentScreen;
 
         private static PlatformID currentPlatform;
 
         private static KeyboardState keyState;
         private bool justWentFullScreen;
+        #endregion
+
+
 
         #region Properties
         public static GameState GameState
