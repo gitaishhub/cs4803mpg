@@ -74,15 +74,15 @@ namespace Spacewar
         private DepthStencilBuffer drawDepthBuffer;
         private SpriteBatch spriteBatch;
 
-        private Screen currentScreen;
-
         private static PlatformID currentPlatform;
 
         private static KeyboardState keyState;
         private bool justWentFullScreen;
         #endregion
 
-
+        //Thank god this code is reasonably structured.
+        private Screen currentScreen;
+        private Screen drawingScreen;
 
         #region Properties
         public static GameState GameState
