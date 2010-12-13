@@ -245,6 +245,14 @@ namespace Spacewar
             base.BeginRun();
         }
 
+        protected override void EndRun()
+        {
+            // //////////////////////////////////
+            // kill threads
+            soundThread.Abort();
+            updateThread.Abort();
+        }
+
         private void soundMT()
         {
             // Update the AudioEngine - MUST call this every frame!!
@@ -569,11 +577,6 @@ namespace Spacewar
                 contentManager.Dispose();
                 contentManager = null;
             }
-
-            // //////////////////////////////////
-            // kill threads
-            soundThread.Abort();
-            updateThread.Abort();
 
         }
 
