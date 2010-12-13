@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpacewarXbox", "SpacewarXbox\SpacewarXbox.csproj", "{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Xbox 360 = Debug|Xbox 360
+		Release|Xbox 360 = Release|Xbox 360
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}.Debug|Xbox 360.ActiveCfg = Debug|Xbox 360
+		{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}.Debug|Xbox 360.Build.0 = Debug|Xbox 360
+		{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}.Debug|Xbox 360.Deploy.0 = Debug|Xbox 360
+		{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}.Release|Xbox 360.ActiveCfg = Release|Xbox 360
+		{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}.Release|Xbox 360.Build.0 = Release|Xbox 360
+		{71FDA3C8-91D3-47B9-B6C5-EFFD10FDFA05}.Release|Xbox 360.Deploy.0 = Release|Xbox 360
+		{8E63EC31-BB66-4636-982B-8CAE58C56F67}.Debug|Xbox 360.ActiveCfg = Debug|Xbox 360
+		{8E63EC31-BB66-4636-982B-8CAE58C56F67}.Release|Xbox 360.ActiveCfg = Release|Xbox 360
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
