@@ -10,6 +10,7 @@
 #region Using Statements
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Audio;
@@ -77,14 +78,24 @@ namespace Spacewar
         private static PlatformID currentPlatform;
 
         private static KeyboardState keyState;
-        private bool justWentFullScreen;
+//        private bool justWentFullScreen;
         #endregion
+
+        /// ///////////////////////////////////////////////
+        /// Added for multi-threading
+        private Thread soundThread;
+        private Thread updateThread;
+        private Boolean justUpdated;
+        private GameTime gameTime;
+        private GameTime oldGameTime;
 
         //Thank god this code is reasonably structured.
         private Screen currentScreen;
         private Screen drawingScreen;
 
         #region Properties
+
+
         public static GameState GameState
         {
             get
@@ -198,6 +209,13 @@ namespace Spacewar
 
             Window.Title = Settings.WindowTitle;
 
+            // //////////////////////////////
+            // stuff for multi-threading
+            gameTime = new GameTime();
+            oldGameTime = new GameTime();
+            justUpdated = false;
+            
+
             base.Initialize();
         }
 
@@ -216,11 +234,42 @@ namespace Spacewar
             camera = new Camera(fieldOfView, aspectRatio, nearPlane, farPlane);
             camera.ViewPosition = new Vector3(0, 0, 500);
 
+            /////////////////////////////
+            // start threads for Update and Draw
+            soundThread = new Thread(new ThreadStart(startSoundMT));
+            updateThread = new Thread(new ThreadStart(startUpdateMT));
+
+            soundThread.Start();
+            updateThread.Start();
+
             base.BeginRun();
         }
 
-        protected override void Update(GameTime gameTime)
+        private void soundMT()
         {
+            // Update the AudioEngine - MUST call this every frame!!
+            Sound.Update();
+        }
+
+        private void startSoundMT()
+        {
+#if XBOX360
+            // set thread affinity
+            Thread.CurrentThread.SetProcessorAffinity(3);
+#endif
+            while (true)
+            {
+                if (justUpdated == true)
+                {
+                    soundMT();
+                    justUpdated = false;
+                }
+            }
+        }
+
+        private void updateMT()
+        {
+            // everything to update goes in here
             TimeSpan elapsedTime = gameTime.ElapsedGameTime;
             TimeSpan time = gameTime.TotalGameTime;
 
@@ -231,7 +280,7 @@ namespace Spacewar
 
             keyState = Keyboard.GetState();
             XInputHelper.Update(this, keyState);
-
+            /*
             if ((keyState.IsKeyDown(Keys.RightAlt) || keyState.IsKeyDown(Keys.LeftAlt)) && keyState.IsKeyDown(Keys.Enter) && !justWentFullScreen)
             {
                 ToggleFullScreen();
@@ -242,7 +291,7 @@ namespace Spacewar
             {
                 justWentFullScreen = false;
             }
-
+            */
             if (XInputHelper.GamePads[PlayerIndex.One].BackPressed ||
                 XInputHelper.GamePads[PlayerIndex.Two].BackPressed)
             {
@@ -269,9 +318,6 @@ namespace Spacewar
                 //Update everything
                 changeState = currentScreen.Update(time, elapsedTime);
 
-                // Update the AudioEngine - MUST call this every frame!!
-                Sound.Update();
-
                 //If either player presses start then reset the game
                 if (XInputHelper.GamePads[PlayerIndex.One].StartPressed ||
                     XInputHelper.GamePads[PlayerIndex.Two].StartPressed)
@@ -286,6 +332,95 @@ namespace Spacewar
             }
 
             base.Update(gameTime);
+        }
+
+        private void startUpdateMT()
+        {
+#if XBOX360
+            // set thread affinity
+            Thread.CurrentThread.SetProcessorAffinity(5);
+#endif
+            while (true)
+            {
+                if (gameTime.Equals(oldGameTime))
+                {
+                    continue;
+                }
+                updateMT();
+                oldGameTime = gameTime;
+            }
+        }
+
+        protected override void Update(GameTime gTime)
+        {
+            justUpdated = true;
+            gameTime = gTime;
+
+            //TimeSpan elapsedTime = gameTime.ElapsedGameTime;
+            //TimeSpan time = gameTime.TotalGameTime;
+
+            //// The time since Update was called last
+            //float elapsed = (float)elapsedTime.TotalSeconds;
+
+            //GameState changeState = GameState.None;
+
+            //keyState = Keyboard.GetState();
+            //XInputHelper.Update(this, keyState);
+
+            //if ((keyState.IsKeyDown(Keys.RightAlt) || keyState.IsKeyDown(Keys.LeftAlt)) && keyState.IsKeyDown(Keys.Enter) && !justWentFullScreen)
+            //{
+            //    ToggleFullScreen();
+            //    justWentFullScreen = true;
+            //}
+
+            //if (keyState.IsKeyUp(Keys.Enter))
+            //{
+            //    justWentFullScreen = false;
+            //}
+
+            //if (XInputHelper.GamePads[PlayerIndex.One].BackPressed ||
+            //    XInputHelper.GamePads[PlayerIndex.Two].BackPressed)
+            //{
+            //    if (gameState == GameState.PlayEvolved || gameState == GameState.PlayRetro)
+            //    {
+            //        paused = !paused;
+            //    }
+
+            //    if (gameState == GameState.LogoSplash)
+            //    {
+            //        this.Exit();
+            //    }
+            //}
+
+            ////Reload settings file?
+            //if (XInputHelper.GamePads[PlayerIndex.One].YPressed)
+            //{
+            //    //settings = Settings.Load("settings.xml");
+            //    //GC.Collect();
+            //}
+
+            //if (!paused)
+            //{
+            //    //Update everything
+            //    changeState = currentScreen.Update(time, elapsedTime);
+
+            //    // Update the AudioEngine - MUST call this every frame!!
+            //    Sound.Update();
+
+            //    //If either player presses start then reset the game
+            //    if (XInputHelper.GamePads[PlayerIndex.One].StartPressed ||
+            //        XInputHelper.GamePads[PlayerIndex.Two].StartPressed)
+            //    {
+            //        changeState = GameState.LogoSplash;
+            //    }
+
+            //    if (changeState != GameState.None)
+            //    {
+            //        ChangeState(changeState);
+            //    }
+            //}
+
+            //base.Update(gameTime);
         }
 
         protected override bool BeginDraw()
@@ -434,6 +569,12 @@ namespace Spacewar
                 contentManager.Dispose();
                 contentManager = null;
             }
+
+            // //////////////////////////////////
+            // kill threads
+            soundThread.Abort();
+            updateThread.Abort();
+
         }
 
         private void ToggleFullScreen()
