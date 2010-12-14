@@ -85,9 +85,10 @@ namespace Spacewar {
         /// Added for multi-threading
         private Thread soundThread;
         private Thread updateThread;
-        private GameTime timeStamp;
-        private bool update;
-        private bool play;
+        // use volatile to prevent caching
+        private volatile GameTime timeStamp;
+        private volatile bool update;
+        private volatile bool play;
 
         //Thank god this code is reasonably structured.
         private Screen currentScreen;
@@ -235,8 +236,8 @@ namespace Spacewar {
 #endif
             while (true) {
                 if (this.play) {
-                    soundMT();
                     this.play = false;
+                    soundMT();
                 }
             }
         }
@@ -254,13 +255,14 @@ namespace Spacewar {
 #endif
             while (true) {
                 if (update) {
-                    updateMT(timeStamp);
                     update = false;
+                    updateMT(timeStamp);
                 }
             }
         }
 
         private void updateMT(GameTime gameTime) {
+
             // everything to update goes in here
             TimeSpan elapsedTime = gameTime.ElapsedGameTime;
             TimeSpan time = gameTime.TotalGameTime;
@@ -270,8 +272,6 @@ namespace Spacewar {
 
             GameState changeState = GameState.None;
 
-            keyState = Keyboard.GetState();
-            XInputHelper.Update(this, keyState);
             /*
             if ((keyState.IsKeyDown(Keys.RightAlt) || keyState.IsKeyDown(Keys.LeftAlt)) && keyState.IsKeyDown(Keys.Enter) && !justWentFullScreen)
             {
@@ -323,12 +323,20 @@ namespace Spacewar {
             //the game to read in one state and write to another state would involve
             //a lot of fundamental changes beyond the scope of this project as all of
             //the game components edit their own values on each update.
+
             this.drawingScreen = this.currentScreen;
         }
 
         protected override void Update(GameTime gTime) {
             //Set this first, to prevent the other threads from getting a nanosecond head start.
             this.timeStamp = gTime;
+
+            // update keyboard status
+            // This needs to happen within the same thread as the game window
+            //  because of Windows stupidnessidity
+            //  http://social.msdn.microsoft.com/forums/en-US/xnaframework/thread/0fc4492d-28d5-4f80-a97f-2ecb4c81b380
+            keyState = Keyboard.GetState();
+            XInputHelper.Update(this, keyState);
 
             //Set flags for other threads to step.
             this.update = true;
