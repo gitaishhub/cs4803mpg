@@ -46,11 +46,11 @@ namespace Spacewar
 
             ships[0] = new SceneItem(game, new EvolvedShape(game, EvolvedShapes.Ship, PlayerIndex.One, selectedShip[0], selectedSkin[0], LightingType.Menu), new Vector3(-120, 0, 0));
             ships[0].Scale = new Vector3(.05f, .05f, .05f);
-            scene.Add(ships[0]);
+            nextScene.Add(ships[0]);
 
             ships[1] = new SceneItem(game, new EvolvedShape(game, EvolvedShapes.Ship, PlayerIndex.Two, selectedShip[1], selectedSkin[1], LightingType.Menu), new Vector3(120, 0, 0));
             ships[1].Scale = new Vector3(.05f, .05f, .05f);
-            scene.Add(ships[1]);
+            nextScene.Add(ships[1]);
         }
 
         /// <summary>

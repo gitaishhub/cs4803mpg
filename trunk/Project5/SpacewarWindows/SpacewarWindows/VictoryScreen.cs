@@ -41,7 +41,7 @@ namespace Spacewar
 
             ship = new SceneItem(game, new EvolvedShape(game, EvolvedShapes.Ship, (winningPlayerNumber == 0) ? PlayerIndex.One : PlayerIndex.Two, (int)winningPlayer.ShipClass, winningPlayer.Skin, LightingType.Menu), new Vector3(-90, -30, 0));
             ship.Scale = new Vector3(.07f, .07f, .07f);
-            scene.Add(ship);
+            nextScene.Add(ship);
         }
 
         /// <summary>

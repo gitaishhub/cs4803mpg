@@ -26,7 +26,8 @@ namespace Spacewar
         /// <summary>
         /// The root of the scene graph for this screen
         /// </summary>
-        protected SceneItem scene = null;
+        protected SceneItem nextScene = null;
+        protected SceneItem drawScene = null;
 
         /// <summary>
         /// Overlay points to a screen that will be drawn AFTER this one, more than likely overlaying it
@@ -56,7 +57,8 @@ namespace Spacewar
         public Screen(Game game)
         {
             this.game = game;
-            this.scene = new SceneItem(game);
+            this.nextScene = new SceneItem(game);
+            this.drawScene = new SceneItem(game);
 
             this.batch = (game as SpacewarGame).SpriteBatch;
             /*if (game != null)
@@ -76,7 +78,7 @@ namespace Spacewar
         public virtual GameState Update(TimeSpan time, TimeSpan elapsedTime)
         {
             //Update the Scene
-            scene.Update(time, elapsedTime);
+            nextScene.Update(time, elapsedTime);
 
             //Default is no state changes, override the class if you want a different state
             return (overlay == null) ? GameState.None : overlay.Update(time, elapsedTime);
@@ -89,7 +91,7 @@ namespace Spacewar
         public virtual void Render()
         {
             //Render this scene then any overlays
-            scene.Render();
+            nextScene.Render();
 
             if (overlay != null)
                 overlay.Render();
@@ -119,8 +121,11 @@ namespace Spacewar
         public virtual void OnCreateDevice()
         {
             //Re-Create the Sprite Batch!
+            //No, don't do this.
+            /*
             IGraphicsDeviceService graphicsService = (IGraphicsDeviceService)game.Services.GetService(typeof(IGraphicsDeviceService));
             batch = new SpriteBatch(graphicsService.GraphicsDevice);
+            */
         }
     }
 }
