@@ -58,11 +58,12 @@ namespace Spacewar
             this.game = game;
             this.scene = new SceneItem(game);
 
-            if (game != null)
+            this.batch = (game as SpacewarGame).SpriteBatch;
+            /*if (game != null)
             {
                 IGraphicsDeviceService graphicsService = (IGraphicsDeviceService)game.Services.GetService(typeof(IGraphicsDeviceService));
                 batch = new SpriteBatch(graphicsService.GraphicsDevice);
-            }
+            }*/
         }
 
         /// <summary>
@@ -102,11 +103,14 @@ namespace Spacewar
             if (overlay != null)
                 overlay.Shutdown();
 
+            //This shit does not fly with multithreaded applications.
+            /*
             if (batch != null)
             {
                 batch.Dispose();
                 batch = null;
             }
+            */
         }
 
         /// <summary>

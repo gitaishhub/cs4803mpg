@@ -92,7 +92,9 @@ namespace Spacewar {
 
         //Thank god this code is reasonably structured.
         private Screen currentScreen;
-        private Screen drawingScreen;
+        //private Screen drawingScreen;
+
+        public SpriteBatch SpriteBatch { get { return this.spriteBatch; } }
 
         #region Properties
 
@@ -201,7 +203,7 @@ namespace Spacewar {
             ChangeState(GameState.LogoSplash);
             
             //Make a reference copy so that drawingScreen doesn't start out as null.
-            this.drawingScreen = this.currentScreen;
+            //this.drawingScreen = this.currentScreen;
 
             float fieldOfView = (float)Math.PI / 4;
             float aspectRatio = (float)FixedDrawingWidth / (float)FixedDrawingHeight;
@@ -324,7 +326,7 @@ namespace Spacewar {
             //a lot of fundamental changes beyond the scope of this project as all of
             //the game components edit their own values on each update.
 
-            this.drawingScreen = this.currentScreen;
+            //this.drawingScreen = this.currentScreen;
         }
 
         protected override void Update(GameTime gTime) {
@@ -423,7 +425,7 @@ namespace Spacewar {
 
             base.Draw(gameTime);
 
-            this.drawingScreen.Render();
+            this.currentScreen.Render();
         }
 
         protected override void EndDraw() {
