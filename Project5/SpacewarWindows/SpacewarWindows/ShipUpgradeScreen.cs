@@ -72,11 +72,11 @@ namespace Spacewar
             menuMusic = Sound.Play(Sounds.MenuMusic);
             weapons[0] = new SceneItem(game, new EvolvedShape(game, EvolvedShapes.Weapon, PlayerIndex.One, (int)ProjectileType.Peashooter, LightingType.Menu), new Vector3(-170, -30, 0));
             weapons[0].Scale = new Vector3(.06f, .06f, .06f);
-            scene.Add(weapons[0]);
+            nextScene.Add(weapons[0]);
 
             weapons[1] = new SceneItem(game, new EvolvedShape(game, EvolvedShapes.Weapon, PlayerIndex.Two, (int)ProjectileType.Peashooter, LightingType.Menu), new Vector3(170, -30, 0));
             weapons[1].Scale = new Vector3(.06f, .06f, .06f);
-            scene.Add(weapons[1]);
+            nextScene.Add(weapons[1]);
         }
 
         /// <summary>

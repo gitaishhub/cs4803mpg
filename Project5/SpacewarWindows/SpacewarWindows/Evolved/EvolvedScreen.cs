@@ -58,7 +58,7 @@ namespace Spacewar
             backdrop.Center = new Vector3(.5f, .5f, 0);
             backdrop.Scale = new Vector3(16f * factor, 9f * factor, 1f);
             backdrop.Position = new Vector3(-.5f, -.5f, 0);
-            scene.Add(backdrop);
+            nextScene.Add(backdrop);
 
             bullets = new Projectiles(game);
             particles = new Particles(game);
@@ -81,7 +81,7 @@ namespace Spacewar
                 ship2.ExtendedExtent[1] = new Vector3(0.0f, -25f, 0.0f);
             }
 
-            scene.Add(bullets);
+            nextScene.Add(bullets);
 
             asteroids = new Asteroid[SpacewarGame.GameLevel + 2];
 
@@ -93,18 +93,18 @@ namespace Spacewar
                 asteroids[i].Paused = true;
                 asteroids[i].Velocity = (float)random.Next(100) * Vector3.Normalize(new Vector3((float)(random.NextDouble() - .5), (float)(random.NextDouble() - .5), 0));
 
-                scene.Add(asteroids[i]);
+                nextScene.Add(asteroids[i]);
             }
 
-            scene.Add(ship1);
-            scene.Add(ship2);
+            nextScene.Add(ship1);
+            nextScene.Add(ship2);
             //Added after other objects so they draw over the top
-            scene.Add(particles);
+            nextScene.Add(particles);
 
 
             //Sun last so its on top
             sun = new Sun(game, new EvolvedSun(game), new Vector3(-.5f, -.5f, 0));
-            scene.Add(sun);
+            nextScene.Add(sun);
 
             //Reset health meters.
             SpacewarGame.Players[0].Health = 5;
