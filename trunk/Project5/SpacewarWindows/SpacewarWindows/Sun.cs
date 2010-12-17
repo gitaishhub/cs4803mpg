@@ -47,10 +47,12 @@ namespace Spacewar
         /// </summary>
         /// <param name="time">Current game time</param>
         /// <param name="elapsedTime">Elapsed time since last update</param>
-        public override void Update(TimeSpan time, TimeSpan elapsedTime)
+        public override void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
-            rotation.Z += (float)(elapsedTime.TotalSeconds / 10.0f);
-            base.Update(time, elapsedTime);
+            Sun target = writeTarget as Sun;
+
+            target.rotation.Z += (float)(elapsedTime.TotalSeconds / 10.0f);
+            base.Update(time, elapsedTime, target);
         }
     }
 }

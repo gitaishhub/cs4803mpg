@@ -47,9 +47,9 @@ namespace Spacewar
         /// <param name="angle">Direction projectile is facing</param>
         /// <param name="time">Game time that this projectile was shot</param>
         /// <param name="particles">The particles to add to for effects</param>
-        public override void Add(PlayerIndex player, Vector3 position, Vector3 velocity, float angle, TimeSpan time, Particles particles)
+        public override void Add(PlayerIndex player, Vector3 position, Vector3 velocity, float angle, TimeSpan time, Particles particles, SceneItem readSource)
         {
-            Add(new Projectile(GameInstance, player, position, velocity, angle, time, null));
+            Add(new Projectile(GameInstance, player, position, velocity, angle, time, null), readSource);
         }
 
         /// <summary>
