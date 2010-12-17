@@ -53,8 +53,10 @@ namespace Spacewar
 
                 int particleCount = 0;
 
-                foreach (SceneItem particle in this)
-                {
+                //foreach (SceneItem particle in this)
+                //{
+                for(int i = 0; i < this.Count; ++i){
+                    SceneItem particle = this[i];
                     if (particle is Particle)
                     {
                         batch.Draw(SpacewarGame.ContentManager.Load<Texture2D>(SpacewarGame.Settings.MediaPath + particleTexture),
