@@ -190,9 +190,11 @@ namespace Spacewar
             }
         }
 
-        public override void Update(TimeSpan time, TimeSpan elapsedTime)
+        public override void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
-            acceleration = Vector3.Zero;
+            Ship target = writeTarget as Ship;
+
+            target.acceleration = Vector3.Zero;
 
             if (!Paused)
             {
@@ -201,20 +203,20 @@ namespace Spacewar
                     //HyperSpace
                     if (XInputHelper.GamePads[player].LeftTriggerPressed || XInputHelper.GamePads[player].BPressed)
                     {
-                        inHyperspace = true;
-                        playedReturn = false;
-                        exitHyperspaceTime = time.TotalSeconds + hyperspaceTime;
+                        target.inHyperspace = true;
+                        target.playedReturn = false;
+                        target.exitHyperspaceTime = time.TotalSeconds + hyperspaceTime;
                         Sound.PlayCue(Sounds.HyperspaceActivate);
                     }
 
                     //Fire
                     if (XInputHelper.GamePads[player].RightTriggerPressed || XInputHelper.GamePads[player].APressed)
                     {
-                        direction.X = (float)(-Math.Sin(Rotation.Z));
-                        direction.Y = (float)(Math.Cos(Rotation.Z));
-                        direction.Z = 0.0f;
+                        target.direction.X = (float)(-Math.Sin(Rotation.Z));
+                        target.direction.Y = (float)(Math.Cos(Rotation.Z));
+                        target.direction.Z = 0.0f;
 
-                        direction.Normalize();
+                        target.direction.Normalize();
                         if (evolved)
                         {
                             //Special case for rockets
@@ -222,28 +224,34 @@ namespace Spacewar
                             {
                                 //Don;t take ship velocity into account cos it looks odd
                                 //rockets accelerte so little chance of rear ending
-                                bullets.Add(player,
+                                target.bullets.Add(player,
                                     Vector3.Transform(bulletOffsets[(int)player, (int)SpacewarGame.Players[(int)player].ShipClass], ShapeItem.World),
                                     Vector3.Multiply(direction, shotSpeed),
                                     Rotation.Z,
-                                    time, particles);
+                                    time,
+                                    particles,
+                                    this.bullets);
                             }
                             else
                             {
-                                bullets.Add(player,
+                                target.bullets.Add(player,
                                     Vector3.Transform(bulletOffsets[(int)player, (int)SpacewarGame.Players[(int)player].ShipClass], ShapeItem.World),
                                     Velocity + Vector3.Multiply(direction, shotSpeed),
                                     Rotation.Z,
-                                    time, particles);
+                                    time,
+                                    particles,
+                                    this.bullets);
                             }
                         }
                         else
                         {
-                            bullets.Add(player,
+                            target.bullets.Add(player,
                                 Vector3.Transform(new Vector3(0, 1.1f, 0), ShapeItem.World),
                                 Velocity + Vector3.Multiply(direction, shotSpeed),
                                 Rotation.Z,
-                                time, null);
+                                time,
+                                null,
+                                this.bullets);
                         }
                     }
                 }
@@ -254,19 +262,19 @@ namespace Spacewar
                     //Play return sound 1.3s before
                     if (time.TotalSeconds > exitHyperspaceTime - 1.3 && !playedReturn)
                     {
-                        playedReturn = true;
+                        target.playedReturn = true;
                         Sound.PlayCue(Sounds.HyperspaceReturn);
                     }
 
                     //Wait until the time is up then reappear in a random position
                     if (time.TotalSeconds > exitHyperspaceTime)
                     {
-                        inHyperspace = false;
+                        target.inHyperspace = false;
 
                         // Asteroids are not allowed to collide with us when we first emerge from Hyperspace
                         // When no asteroids are colliding with us, this reverts to false!
-                        Invulnerable = true;
-                        position = new Vector3((float)(random.NextDouble() * 800.0 - 400.0), (float)(random.NextDouble() * 500.0 - 250.0), 0);
+                        target.Invulnerable = true;
+                        target.position = new Vector3((float)(random.NextDouble() * 800.0 - 400.0), (float)(random.NextDouble() * 500.0 - 250.0), 0);
                     }
                 }
                 else if (inRecovery)
@@ -274,17 +282,17 @@ namespace Spacewar
                     //Wait until the time is up then reappear
                     if (time.TotalSeconds > exitRecoveryTime)
                     {
-                        inRecovery = false;
+                        target.inRecovery = false;
 
                         // Asteroids are not allowed to collide with us when we first emerge from Recovery
                         // When no asteroids are colliding with us, this reverts to false!
-                        Invulnerable = true;
+                        target.Invulnerable = true;
                     }
                 }
                 else
                 {
                     //Only move ship if we are out of hyperspace and recovery from destruction
-                    rotation.Z -= (float)((double)XInputHelper.GamePads[player].ThumbStickLeftX * elapsedTime.TotalSeconds * 3.0);
+                    target.rotation.Z -= (float)((double)XInputHelper.GamePads[player].ThumbStickLeftX * elapsedTime.TotalSeconds * 3.0);
 
                     if (XInputHelper.GamePads[player].ThumbStickLeftY != 0)
                     {
@@ -303,51 +311,51 @@ namespace Spacewar
 
                             }
 
-                            playingThrustSound = true;
+                            target.playingThrustSound = true;
                         }
 
                         //animate the thrust
-                        showThrust = true;
-                        thrustFrame = (thrustFrame + (elapsedTime.TotalSeconds * 12));
-                        if (thrustFrame > 12)
-                            thrustFrame = 12;
+                        target.showThrust = true;
+                        target.thrustFrame = (thrustFrame + (elapsedTime.TotalSeconds * 12));
+                        if (target.thrustFrame > 12)
+                            target.thrustFrame = 12;
 
                         float factor = XInputHelper.GamePads[player].ThumbStickLeftY;
                         Vector2 thrustDirection = new Vector2((float)(-SpacewarGame.Settings.ThrustPower * factor * Math.Sin(Rotation.Z)), (float)(SpacewarGame.Settings.ThrustPower * factor * Math.Cos(Rotation.Z)));
-                        acceleration += new Vector3(thrustDirection.X, thrustDirection.Y, 0);
+                        target.acceleration += new Vector3(thrustDirection.X, thrustDirection.Y, 0);
                     }
                     else
                     {
                         //Shrink the thrust
-                        thrustFrame += (elapsedTime.TotalSeconds * 12);
-                        if (thrustFrame > 29)
+                        target.thrustFrame += (elapsedTime.TotalSeconds * 12);
+                        if (target.thrustFrame > 29)
                         {
-                            showThrust = false;
-                            thrustFrame = 0;
+                            target.showThrust = false;
+                            target.thrustFrame = 0;
                         }
 
-                        if (playingThrustSound)
+                        if (target.playingThrustSound)
                         {
                             GamePad.SetVibration(player, 0, 0);
 
                             Sound.Stop(cue);
-                            playingThrustSound = false;
+                            target.playingThrustSound = false;
                         }
                     }
 
                     //Friction is a function of current velocity
                     if (evolved)
-                        acceleration -= Velocity * SpacewarGame.Settings.FrictionFactor;
+                        target.acceleration -= Velocity * SpacewarGame.Settings.FrictionFactor;
                 }
             }
 
             //Calculate new positions, speeds and other base class stuff
-            base.Update(time, elapsedTime);
+            base.Update(time, elapsedTime, target);
 
             //Limit the speed
             if (velocity.Length() > SpacewarGame.Settings.MaxSpeed)
             {
-                velocity = Vector3.Normalize(Velocity) * SpacewarGame.Settings.MaxSpeed;
+                target.velocity = Vector3.Normalize(Velocity) * SpacewarGame.Settings.MaxSpeed;
             }
         }
 

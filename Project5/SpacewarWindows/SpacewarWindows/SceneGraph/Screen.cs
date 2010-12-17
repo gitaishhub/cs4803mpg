@@ -30,6 +30,11 @@ namespace Spacewar
         protected SceneItem drawScene = null;
 
         /// <summary>
+        /// Volatile bool used to safely swap update and render scenes.
+        /// </summary>
+        private volatile bool sceneBusy = false;
+
+        /// <summary>
         /// Overlay points to a screen that will be drawn AFTER this one, more than likely overlaying it
         /// </summary>
         protected Screen overlay;
@@ -78,7 +83,23 @@ namespace Spacewar
         public virtual GameState Update(TimeSpan time, TimeSpan elapsedTime)
         {
             //Update the Scene
-            nextScene.Update(time, elapsedTime);
+            drawScene.Update(time, elapsedTime, nextScene);
+
+            //Make sure the variables aren't currently being swapped (highly unlikely)
+            //This variable is volatile, we figured this would be faster than a lock.
+            while (this.sceneBusy) { }
+
+            this.sceneBusy = true;
+
+            //Resolve list issues with the two screens.
+            this.drawScene.ResolveLists();
+            this.nextScene.ResolveLists();
+
+            SceneItem temp = this.nextScene;
+            this.nextScene = this.drawScene;
+            this.drawScene = temp;
+
+            this.sceneBusy = false;
 
             //Default is no state changes, override the class if you want a different state
             return (overlay == null) ? GameState.None : overlay.Update(time, elapsedTime);
@@ -90,8 +111,16 @@ namespace Spacewar
         /// </summary>
         public virtual void Render()
         {
+            //Make sure the variables aren't currently being swapped (highly unlikely)
+            //This variable is volatile, we figured this would be faster than a lock.
+            while (this.sceneBusy) { }
+
+            this.sceneBusy = true;
+            
             //Render this scene then any overlays
-            nextScene.Render();
+            drawScene.Render();
+
+            this.sceneBusy = false;
 
             if (overlay != null)
                 overlay.Render();
@@ -121,9 +150,7 @@ namespace Spacewar
         public virtual void OnCreateDevice()
         {
             //Re-Create the Sprite Batch!
-            //No, don't do this.
-            /*
-            IGraphicsDeviceService graphicsService = (IGraphicsDeviceService)game.Services.GetService(typeof(IGraphicsDeviceService));
+            /*IGraphicsDeviceService graphicsService = (IGraphicsDeviceService)game.Services.GetService(typeof(IGraphicsDeviceService));
             batch = new SpriteBatch(graphicsService.GraphicsDevice);
             */
         }

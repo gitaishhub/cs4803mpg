@@ -41,7 +41,7 @@ namespace Spacewar
         /// <param name="angle">Direction projectile is facing</param>
         /// <param name="time">Game time that this projectile was shot</param>
         /// <param name="particles">The particles to add to for effects</param>
-        public virtual void Add(PlayerIndex player, Vector3 position, Vector3 velocity, float angle, TimeSpan time, Particles particles)
+        public virtual void Add(PlayerIndex player, Vector3 position, Vector3 velocity, float angle, TimeSpan time, Particles particles, SceneItem readSource)
         {
             ProjectileType projectileType = SpacewarGame.Players[(int)player].ProjectileType;
 
@@ -61,10 +61,10 @@ namespace Spacewar
                 //If we are not up to max then we can add bullets
                 if (Projectile.ProjectileCount[(int)player] < SpacewarGame.Settings.Weapons[(int)projectileType].Max)
                 {
-                    Add(new Projectile(GameInstance, player, position + velocity * i * .1f + offset, velocity, angle, time, particles));
+                    Add(new Projectile(GameInstance, player, position + velocity * i * .1f + offset, velocity, angle, time, particles), readSource);
                     if (offset != Vector3.Zero)
                     {
-                        Add(new Projectile(GameInstance, player, position + velocity * i * .1f - offset, velocity, angle, time, particles));
+                        Add(new Projectile(GameInstance, player, position + velocity * i * .1f - offset, velocity, angle, time, particles), readSource);
                     }
                 }
             }

@@ -64,27 +64,29 @@ namespace Spacewar
         /// </summary>
         /// <param name="time">Current game time</param>
         /// <param name="elapsedTime">Elapsed time since last update</param>
-        public override void Update(TimeSpan time, TimeSpan elapsedTime)
+        public override void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
+            Particle target = writeTarget as Particle;
+
             //Start the animation 1st time round
             if (endTime == TimeSpan.Zero)
             {
-                endTime = time + lifetime;
+                target.endTime = time + lifetime;
             }
 
             //End the animation when its time is due as long as lifet
             if (time > endTime)
             {
-                Delete = true;
+                target.Delete = true;
             }
 
             //Fade between the colors
             float percentLife = (float)((endTime.TotalSeconds - time.TotalSeconds) / lifetime.TotalSeconds);
 
-            color = Vector4.Lerp(endColor, startColor, percentLife);
+            target.color = Vector4.Lerp(endColor, startColor, percentLife);
 
             //Do any velocity moving
-            base.Update(time, elapsedTime);
+            base.Update(time, elapsedTime, target);
         }
     }
 }

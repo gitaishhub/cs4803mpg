@@ -74,15 +74,17 @@ namespace Spacewar
                 Radius = 6;
         }
 
-        public override void Update(TimeSpan time, TimeSpan elapsedTime)
+        public override void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
-            //Random rotation
-            roll += rollIncrement * (float)elapsedTime.TotalSeconds;
-            yaw += yawIncrement * (float)elapsedTime.TotalSeconds;
-            pitch += pitchIncrement * (float)elapsedTime.TotalSeconds;
+            Asteroid target = writeTarget as Asteroid;
 
-            rotation = new Vector3(roll, pitch, yaw);
-            base.Update(time, elapsedTime);
+            //Random rotation
+            target.roll += rollIncrement * (float)elapsedTime.TotalSeconds;
+            target.yaw += yawIncrement * (float)elapsedTime.TotalSeconds;
+            target.pitch += pitchIncrement * (float)elapsedTime.TotalSeconds;
+
+            target.rotation = new Vector3(roll, pitch, yaw);
+            base.Update(time, elapsedTime, target);
         }
     }
 }

@@ -45,8 +45,10 @@ namespace Spacewar
         /// </summary>
         /// <param name="time"></param>
         /// <param name="elapsedTime"></param>
-        public override void Update(TimeSpan time, TimeSpan elapsedTime)
+        public override void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
+            SpacewarSceneItem target = writeTarget as SpacewarSceneItem;
+
             if (!Paused)
             {
                 //Add in gravity 
@@ -54,35 +56,35 @@ namespace Spacewar
                 double distancePower = Math.Pow(forceDirection.Length(), SpacewarGame.Settings.GravityPower);
                 double factor = Math.Min(SpacewarGame.Settings.GravityStrength / distancePower, 100.0); //stops insane accelerations at the sun since we have no collisions
                 Vector3 gravityAcceleration = Vector3.Multiply(Vector3.Normalize(forceDirection), (float)factor);
-                acceleration -= gravityAcceleration;
+                target.acceleration -= gravityAcceleration;
             }
 
             //Call the base to update velocity and position
-            base.Update(time, elapsedTime);
+            base.Update(time, elapsedTime, target);
 
             //Zero out acceleration - will be reset on next update
-            acceleration = Vector3.Zero;
+            target.acceleration = Vector3.Zero;
 
             //Wrap around the screen to the correct position.
             if (SpacewarGame.GameState == GameState.PlayEvolved)
             {
                 if (position.X > 400)
-                    position.X = -400;
+                    target.position.X = -400;
                 else if (position.X < -400)
-                    position.X = 400;
+                    target.position.X = 400;
             }
             else
             {
                 if (position.X > 300)
-                    position.X = -300;
+                    target.position.X = -300;
                 else if (position.X < -300)
-                    position.X = 300;
+                    target.position.X = 300;
             }
 
             if (position.Y > 250)
-                position.Y = -250;
+                target.position.Y = -250;
             else if (position.Y < -250)
-                position.Y = 250;
+                target.position.Y = 250;
         }
     }
 }

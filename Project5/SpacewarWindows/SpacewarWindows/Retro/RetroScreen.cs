@@ -27,21 +27,21 @@ namespace Spacewar
         {
             //Retro
             backdrop = new SceneItem(game, new RetroStarfield(game));
-            nextScene.Add(backdrop);
+            nextScene.Add(backdrop, drawScene);
 
             bullets = new RetroProjectiles(game);
             ship1 = new Ship(game, PlayerIndex.One, new Vector3(-250, 0, 0), bullets);
             ship1.Radius = 10f;
-            nextScene.Add(ship1);
+            nextScene.Add(ship1, drawScene);
 
             ship2 = new Ship(game, PlayerIndex.Two, new Vector3(250, 0, 0), bullets);
             ship2.Radius = 10f;
-            nextScene.Add(ship2);
+            nextScene.Add(ship2, drawScene);
 
             sun = new Sun(game, new RetroSun(game), new Vector3(SpacewarGame.Settings.SunPosition, 0.0f));
-            nextScene.Add(sun);
+            nextScene.Add(sun, drawScene);
 
-            nextScene.Add(bullets);
+            nextScene.Add(bullets, drawScene);
 
             paused = false;
         }

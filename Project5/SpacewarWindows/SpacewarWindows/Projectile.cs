@@ -147,8 +147,10 @@ namespace Spacewar
         /// </summary>
         /// <param name="time">Current game time</param>
         /// <param name="elapsedTime">Elapsed time since last update</param>
-        public override void Update(TimeSpan time, TimeSpan elapsedTime)
+        public override void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
+            Projectile target = writeTarget as Projectile;
+
             //See if this bullets lifespan has expired
             if (time.TotalSeconds > endTime)
             {
@@ -156,28 +158,28 @@ namespace Spacewar
                 if (SpacewarGame.GameState == GameState.PlayEvolved && projectileType == 4 && !exploded)
                 {
                     Sound.PlayCue(Sounds.Explosion);
-                    particles.AddExplosion(Position);
+                    target.particles.AddExplosion(Position);
 
                     //We don't delete it this frame but we change the radius and the damage
-                    exploded = true;
-                    radius = 30;
-                    damage = 3;
+                    target.exploded = true;
+                    target.radius = 30;
+                    target.damage = 3;
                 }
                 else
                 {
-                    DeleteProjectile();
+                    target.DeleteProjectile();
                 }
             }
 
-            acceleration = thrust;
+            target.acceleration = thrust;
 
             //For the rocket we need particles
             if (projectileType == 3)
             {
-                particles.AddRocketTrail(shape.World, new Vector2(acceleration.X, -acceleration.Y));
+                target.particles.AddRocketTrail(shape.World, new Vector2(acceleration.X, -acceleration.Y), this);
             }
 
-            base.Update(time, elapsedTime);
+            base.Update(time, elapsedTime, target);
         }
 
         public void DeleteProjectile()

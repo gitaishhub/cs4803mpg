@@ -79,7 +79,7 @@ namespace Spacewar
         /// </summary>
         /// <param name="world">Start position of the particle</param>
         /// <param name="direction">Direction the ship is heading. Particles will be lined up along this vec</param>
-        public void AddShipTrail(Matrix world, Vector2 direction)
+        public void AddShipTrail(Matrix world, Vector2 direction, SceneItem readSource)
         {
             //Move source point into screen space
             Vector4 source = Vector4.Transform(new Vector4(0, 0, 130000, 1), world * SpacewarGame.Camera.View * SpacewarGame.Camera.Projection);
@@ -107,7 +107,7 @@ namespace Spacewar
         /// </summary>
         /// <param name="world">Start position of the particle</param>
         /// <param name="direction">Direction the rocket is heading. Particles will be lined up along this vec</param>
-        public void AddRocketTrail(Matrix world, Vector2 direction)
+        public void AddRocketTrail(Matrix world, Vector2 direction, SceneItem readSource)
         {
             //Move source point into screen space
             Vector4 source = Vector4.Transform(new Vector4(0, 0, 291, 1), world * SpacewarGame.Camera.View * SpacewarGame.Camera.Projection);
@@ -154,8 +154,10 @@ namespace Spacewar
 
         public override void OnCreateDevice()
         {
+            /*
             IGraphicsDeviceService graphicsService = (IGraphicsDeviceService)GameInstance.Services.GetService(typeof(IGraphicsDeviceService));
             batch = new SpriteBatch(graphicsService.GraphicsDevice);
+             */
         }
     }
 }

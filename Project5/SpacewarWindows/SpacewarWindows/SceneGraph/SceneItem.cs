@@ -20,8 +20,8 @@ namespace Spacewar
     /// <summary>
     /// SceneItem is any item that can be in a scenegraph
     /// </summary>
-    public class SceneItem : List<SceneItem>
-    {
+    public class SceneItem : List<SceneItem> {
+        #region Members
         /// <summary>
         /// Collision Radius of this item
         /// </summary>
@@ -83,6 +83,10 @@ namespace Spacewar
         protected Vector3 center;
 
         private Game game;
+        #endregion
+
+        protected List<SceneItem> addQueue;
+        protected List<SceneItem> deleteQueue;
 
         #region Properties
         public bool Delete
@@ -223,6 +227,9 @@ namespace Spacewar
         public SceneItem(Game game)
         {
             this.game = game;
+
+            this.addQueue = new List<SceneItem>();
+            this.deleteQueue = new List<SceneItem>();
         }
 
         /// <summary>
@@ -235,6 +242,9 @@ namespace Spacewar
             this.shape = shape;
             this.position = initialPosition;
             this.game = game;
+
+            this.addQueue = new List<SceneItem>();
+            this.deleteQueue = new List<SceneItem>();
         }
 
         /// <summary>
@@ -245,6 +255,9 @@ namespace Spacewar
         {
             this.shape = shape;
             this.game = game;
+
+            this.addQueue = new List<SceneItem>();
+            this.deleteQueue = new List<SceneItem>();
         }
 
         /// <summary>
@@ -255,6 +268,9 @@ namespace Spacewar
         {
             this.position = initialPosition;
             this.game = game;
+
+            this.addQueue = new List<SceneItem>();
+            this.deleteQueue = new List<SceneItem>();
         }
 
         /// <summary>
@@ -266,12 +282,9 @@ namespace Spacewar
             //A new custom 'add' that sets the parent and the root properties
             //on the child item
             childItem.Parent = this;
-            if (Root == null)
-            {
+            if (Root == null) {
                 childItem.Root = this;
-            }
-            else
-            {
+            } else {
                 childItem.Root = Root;
             }
 
@@ -279,24 +292,30 @@ namespace Spacewar
             ((List<SceneItem>)this).Add(childItem);
         }
 
+        public void Add(SceneItem childItem, SceneItem readSource) {
+            //Queue this for resolving later.
+            this.addQueue.Add(childItem);
+            readSource.addQueue.Add(childItem);
+        }
+
         /// <summary>
         /// Updates any values associated with this scene item and its children
         /// </summary>
         /// <param name="time">Game time</param>
         /// <param name="elapsedTime">Elapsed game time since last call</param>
-        public virtual void Update(TimeSpan time, TimeSpan elapsedTime)
+        public virtual void Update(TimeSpan time, TimeSpan elapsedTime, SceneItem writeTarget)
         {
             if (!paused)
             {
                 //Do the basic acceleration/velocity/position updates
-                velocity += Vector3.Multiply(acceleration, (float)elapsedTime.TotalSeconds);
-                position += Vector3.Multiply(velocity, (float)elapsedTime.TotalSeconds);
+                writeTarget.velocity += Vector3.Multiply(acceleration, (float)elapsedTime.TotalSeconds);
+                writeTarget.position += Vector3.Multiply(velocity, (float)elapsedTime.TotalSeconds);
             }
 
             //If this item has something to draw then update it
             if (shape != null)
             {
-                shape.World = Matrix.CreateTranslation(-center) *
+                writeTarget.shape.World = Matrix.CreateTranslation(-center) *
                               Matrix.CreateScale(scale) *
                               Matrix.CreateRotationX(rotation.X) *
                               Matrix.CreateRotationY(rotation.Y) *
@@ -304,23 +323,62 @@ namespace Spacewar
                               Matrix.CreateTranslation(position + center);
                 if (!paused)
                 {
-                    shape.Update(time, elapsedTime);
+                    writeTarget.shape.Update(time, elapsedTime);
                 }
             }
 
-            //Update each child item
-            foreach (SceneItem item in this)
-            {
-                item.Update(time, elapsedTime);
+            if (this.Count != writeTarget.Count) {
+                throw new Exception("Fucking hell, you didn't resolve the adds and deletes.");
             }
 
-            //Remove any items that need deletion
-            RemoveAll(IsDeleted);
+            //Update each child item, passing through their write targets.
+            for (int i = 0; i < this.Count; i++) {
+                this[i].Update(time, elapsedTime, writeTarget[i]);
+            }
+
+            /*
+            foreach (SceneItem item in this)
+            {
+                item.Update(time, elapsedTime, writeTarget);
+            }
+            */
+
+            //Gather all items marked for deletion.
+            this.DeleteMarked(writeTarget);
         }
 
-        private static bool IsDeleted(SceneItem item)
-        {
-            return item.delete;
+        //private static bool IsDeleted(SceneItem item)
+        //{
+        //    return item.delete;
+        //}
+
+        private void DeleteMarked(SceneItem writeTarget) {
+            foreach (SceneItem item in this) {
+                if (item.delete) {
+                    writeTarget.deleteQueue.Add(item);
+                    this.deleteQueue.Add(item);
+                }
+            }
+        }
+
+        public void ResolveLists() {
+            //Look at lists, resolve and empty them.
+            foreach (SceneItem item in this.addQueue) {
+                this.Add(item);
+            }
+
+            foreach (SceneItem item in this.deleteQueue) {
+                this.Remove(item);
+            }
+
+
+            this.addQueue.Clear();
+            this.deleteQueue.Clear();
+
+            //Do this for our 'children' as well.
+            foreach (SceneItem item in this) {
+                item.ResolveLists();
+            }
         }
 
         /// <summary>
