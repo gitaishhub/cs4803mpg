@@ -220,6 +220,11 @@ namespace Spacewar {
             soundThread.Start();
             updateThread.Start();
 
+#if XBOX360
+            // set affinity of main thread to 1
+            Thread.CurrentThread.SetProcessorAffinity(1);
+#endif
+
             base.BeginRun();
         }
 
