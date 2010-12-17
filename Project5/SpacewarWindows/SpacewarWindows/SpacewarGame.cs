@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -487,6 +486,8 @@ namespace Spacewar {
 
             contentManager = new ContentManager(Services);
 
+            spriteBatch = new SpriteBatch(graphics.GraphicsDevice);
+
             if (currentScreen != null)
                 currentScreen.OnCreateDevice();
 
@@ -503,9 +504,7 @@ namespace Spacewar {
                 drawDepthBuffer = new DepthStencilBuffer(graphics.GraphicsDevice,
                                                 FixedDrawingWidth, FixedDrawingHeight,
                                                 pp.AutoDepthStencilFormat,
-                                                pp.MultiSampleType, pp.MultiSampleQuality);
-
-                spriteBatch = new SpriteBatch(graphics.GraphicsDevice);
+                                                pp.MultiSampleType, pp.MultiSampleQuality);    
             }
         }
 
