@@ -19,9 +19,21 @@ namespace ThreatAwarePathfinder {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        private const int WIDTH = 1024;
+        private const int HEIGHT = 768;
+        
+        private Texture2D nodeTex;
+        private Vector2 nodeTexOrigin;
+        private float nodeScale;
+
+        private float delta = 16;
+
         public AbstractDemo() {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
+            this.graphics.PreferredBackBufferWidth = AbstractDemo.WIDTH;
+            this.graphics.PreferredBackBufferHeight = AbstractDemo.HEIGHT;
         }
 
         /// <summary>
@@ -32,6 +44,13 @@ namespace ThreatAwarePathfinder {
         /// </summary>
         protected override void Initialize() {
             // TODO: Add your initialization logic here
+
+            //Discretize space and create nodes.
+            for (float x = 0; x < AbstractDemo.WIDTH / this.delta; x++) {
+                for (float y = 0; y < AbstractDemo.HEIGHT / this.delta; y++) {
+
+                }
+            }
 
             base.Initialize();
         }
@@ -45,6 +64,10 @@ namespace ThreatAwarePathfinder {
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            this.nodeTex = this.Content.Load<Texture2D>("node");
+            this.nodeTexOrigin = new Vector2(nodeTex.Width / 2f, nodeTex.Height / 2f);
+
+            this.nodeScale = (this.delta / 2) / this.nodeTex.Width;
         }
 
         /// <summary>
@@ -61,12 +84,13 @@ namespace ThreatAwarePathfinder {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime) {
+            KeyboardState keyboard = Keyboard.GetState();
+
             // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
+            if (keyboard.IsKeyDown(Keys.Escape)) this.Exit();
 
             // TODO: Add your update logic here
-
+            
             base.Update(gameTime);
         }
 
@@ -75,9 +99,22 @@ namespace ThreatAwarePathfinder {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Beige);
 
             // TODO: Add your drawing code here
+            spriteBatch.Begin();
+
+            Vector2 v = Vector2.Zero;
+
+            for (float x = 0.5f; x < AbstractDemo.WIDTH / this.delta; x++) {
+                for (float y = 0.5f; y < AbstractDemo.HEIGHT / this.delta; y++) {
+                    v.X = x * this.delta;
+                    v.Y = y * this.delta;
+
+                    spriteBatch.Draw(this.nodeTex, v, null, Color.White, 0f, this.nodeTexOrigin, this.nodeScale, SpriteEffects.None, 0f);
+                }
+            }
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }
