@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BiDirectional_A_Star
 {
-    class AStar
+    public class AStar
     {
         private Node startNode;
         private Node destNode;

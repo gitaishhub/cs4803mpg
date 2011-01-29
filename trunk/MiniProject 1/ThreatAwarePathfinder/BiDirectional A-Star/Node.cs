@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 
 namespace BiDirectional_A_Star
 {
-    class Node
+    public class Node
     {
         public float? G { get; set; }
         public Vector2 Pos { get; set; }

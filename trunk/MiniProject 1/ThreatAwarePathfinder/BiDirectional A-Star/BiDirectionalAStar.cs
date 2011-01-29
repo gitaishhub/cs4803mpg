@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 
 namespace BiDirectional_A_Star
 {
-    class BiDirectionAStar
+    public class BiDirectionAStar
     {
         private Node startNode;
         private Node destNode;
