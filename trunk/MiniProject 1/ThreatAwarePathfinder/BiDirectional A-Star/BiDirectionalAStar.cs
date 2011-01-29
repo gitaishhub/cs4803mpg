@@ -29,7 +29,6 @@ namespace BiDirectional_A_Star
 
         private AStar startToDest;
         private AStar destToStart;
-        private bool complete;
 
         List<Node> answer;
 
@@ -39,21 +38,11 @@ namespace BiDirectional_A_Star
             this.destNode = dest;
             this.startToDest = new AStar(start, dest);
             this.destToStart = new AStar(dest, start);
-            complete = false;
         }
 
         public List<Node> Step()
         {
-            List<Node> stdFrontier = startToDest.FrontierNodes;
-            List<Node> dtsFrontier = destToStart.FrontierNodes;
-
-            foreach (Node n in stdFrontier)
-            {
-                complete = dtsFrontier.Contains(n);
-                if (complete) { break; }
-            }
-
-            if (complete) { return answer; }
+            if (answer != null) { return answer; }
 
             float stdBest = startToDest.CalcBestDistance();
             float dtsBest = destToStart.CalcBestDistance();
@@ -104,12 +93,11 @@ namespace BiDirectional_A_Star
 
         public List<Node> Solve()
         {
-            List<Node> retval = null;
-            while (!complete)
+            while (answer != null)
             {
-                retval = Step();
+                Step();
             }
-            return retval;
+            return answer;
         }
     }
 }
