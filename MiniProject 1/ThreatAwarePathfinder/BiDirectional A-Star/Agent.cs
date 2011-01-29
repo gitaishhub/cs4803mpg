@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 
 namespace BiDirectional_A_Star
 {
-    class Agent
+    public class Agent
     {
         public Vector2 Pos { get; set; }
         public BoundingSphere ThreatArea { get; set; }

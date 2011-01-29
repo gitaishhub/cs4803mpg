@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.Net;
 using Microsoft.Xna.Framework.Storage;
 
+using BiDirectional_A_Star;
+
 namespace ThreatAwarePathfinder {
     /// <summary>
     /// This is the main type for your game
@@ -51,6 +53,8 @@ namespace ThreatAwarePathfinder {
 
                 }
             }
+
+            Node node = new Node();
 
             base.Initialize();
         }
@@ -99,7 +103,7 @@ namespace ThreatAwarePathfinder {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.Beige);
+            GraphicsDevice.Clear(new Color(0.95f, 0.95f, 0.95f));
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
