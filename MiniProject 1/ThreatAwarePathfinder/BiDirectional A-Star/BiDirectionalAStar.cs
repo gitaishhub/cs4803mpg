@@ -30,7 +30,9 @@ namespace BiDirectional_A_Star
         private AStar startToDest;
         private AStar destToStart;
 
-        List<Node> answer;
+        private List<Node> answer;
+        public List<Node> answer0;
+        public List<Node> answer1;
 
         public BiDirectionAStar(Node start, Node dest)
         {
@@ -59,16 +61,18 @@ namespace BiDirectional_A_Star
 
             List<Node> soFar = new List<Node>();
             int count = 0;
-            if (expandedNode.CameFrom.Count > 1)
-            {
-                int test = 1 + 1;
-            }
             foreach (Node cameFrom in expandedNode.CameFrom)
             {
-                soFar.AddRange(getCameFrom(cameFrom, count));
                 if (count == 0)
                 {
-                    soFar.Add(expandedNode);
+                    answer0 = getCameFrom(cameFrom, count);
+                    answer0.Add(expandedNode);
+                    soFar.AddRange(answer0);
+                }
+                else if (count == 1)
+                {
+                    answer1 = getCameFrom(cameFrom, count);
+                    soFar.AddRange(answer1);
                 }
                 count++;
             }
