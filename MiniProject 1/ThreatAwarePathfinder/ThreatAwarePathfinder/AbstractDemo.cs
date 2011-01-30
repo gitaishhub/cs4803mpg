@@ -23,12 +23,16 @@ namespace ThreatAwarePathfinder {
 
         private const int WIDTH = 1024;
         private const int HEIGHT = 768;
-        
+
+        private Node[,] nodeArray;
+
         private Texture2D nodeTex;
         private Vector2 nodeTexOrigin;
         private float nodeScale;
 
         private float delta = 16;
+
+        private List<Node> path;
 
         public AbstractDemo() {
             graphics = new GraphicsDeviceManager(this);
@@ -36,6 +40,7 @@ namespace ThreatAwarePathfinder {
 
             this.graphics.PreferredBackBufferWidth = AbstractDemo.WIDTH;
             this.graphics.PreferredBackBufferHeight = AbstractDemo.HEIGHT;
+            this.IsMouseVisible = true;
         }
 
         /// <summary>
@@ -48,13 +53,56 @@ namespace ThreatAwarePathfinder {
             // TODO: Add your initialization logic here
 
             //Discretize space and create nodes.
-            for (float x = 0; x < AbstractDemo.WIDTH / this.delta; x++) {
-                for (float y = 0; y < AbstractDemo.HEIGHT / this.delta; y++) {
+            int nodeWidth = (int)(AbstractDemo.WIDTH / this.delta);
+            int nodeHeight = (int)(AbstractDemo.HEIGHT / this.delta);
+            this.nodeArray = new Node[nodeWidth, nodeHeight];
 
+            Vector2 v = Vector2.Zero;
+            for (int x = 0; x < nodeWidth; x++) {
+                for (int y = 0; y < nodeHeight; y++) {
+                    v.X = (x + 0.5f) * this.delta;
+                    v.Y = (y + 0.5f) * this.delta;
+
+                    Node node = new Node();
+                    node.Pos = v;
+
+                    this.nodeArray[x, y] = node;
                 }
             }
 
-            Node node = new Node();
+            //Link nodes to their neighbors.
+            for (int i = 0; i < nodeWidth; i++) {
+                for (int j = 0; j < nodeHeight; j++) {
+                    Node node = this.nodeArray[i, j];
+
+                    bool topEdge = j - 1 < 0;
+                    bool botEdge = j + 1 >= nodeHeight;
+                    bool ltEdge = i - 1 < 0;
+                    bool rtEdge = i + 1 >= nodeWidth;
+
+                    //NW
+                    if (!topEdge && !ltEdge) node.Neighbors.Add(this.nodeArray[i - 1, j - 1]);
+                    //N
+                    if (!topEdge) node.Neighbors.Add(this.nodeArray[i, j - 1]);
+                    //NE
+                    if (!topEdge && !rtEdge) node.Neighbors.Add(this.nodeArray[i + 1, j - 1]);
+                    //E
+                    if (!rtEdge) node.Neighbors.Add(this.nodeArray[i + 1, j]);
+                    //SE
+                    if (!botEdge && !rtEdge) node.Neighbors.Add(this.nodeArray[i + 1, j + 1]);
+                    //S
+                    if (!botEdge) node.Neighbors.Add(this.nodeArray[i, j + 1]);
+                    //SW
+                    if (!botEdge && !ltEdge) node.Neighbors.Add(this.nodeArray[i - 1, j + 1]);
+                    //W
+                    if (!ltEdge) node.Neighbors.Add(this.nodeArray[i - 1, j]);
+                }
+            }
+
+            //Search!
+            BiDirectionAStar pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
+            this.path = pather.Solve();
+            Console.Out.WriteLine("Search complete.");
 
             base.Initialize();
         }
@@ -108,16 +156,14 @@ namespace ThreatAwarePathfinder {
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
-            Vector2 v = Vector2.Zero;
-
-            for (float x = 0.5f; x < AbstractDemo.WIDTH / this.delta; x++) {
-                for (float y = 0.5f; y < AbstractDemo.HEIGHT / this.delta; y++) {
-                    v.X = x * this.delta;
-                    v.Y = y * this.delta;
-
-                    spriteBatch.Draw(this.nodeTex, v, null, Color.White, 0f, this.nodeTexOrigin, this.nodeScale, SpriteEffects.None, 0f);
-                }
+            foreach (Node node in this.nodeArray) {
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, Color.White, 0f, this.nodeTexOrigin, this.nodeScale, SpriteEffects.None, 0f);
             }
+
+            foreach (Node node in this.path) {
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, Color.Blue, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
+            }
+
             spriteBatch.End();
 
             base.Draw(gameTime);
