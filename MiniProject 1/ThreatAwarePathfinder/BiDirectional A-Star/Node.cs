@@ -24,5 +24,10 @@ namespace BiDirectional_A_Star
         {
             return AStarHelper.CalcDistByThreat(this, destNode, enemies, allies);
         }
+
+        public bool Equals(Node n)
+        {
+            return this.Pos.X == n.Pos.X && this.Pos.Y == n.Pos.Y;
+        }
     }
 }
