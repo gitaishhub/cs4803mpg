@@ -9,11 +9,17 @@ namespace BiDirectional_A_Star
     public class Agent
     {
         public Vector2 Pos { get; set; }
-        public BoundingSphere ThreatArea { get; set; }
+        public float Radius { get; set; }
+        public BoundingSphere ThreatArea {
+            get {
+                return new BoundingSphere(new Vector3(this.Pos, 0), this.Radius);
+            }
+        }
 
-        public Agent(BoundingSphere threatArea)
+        public Agent(Vector2 position, float radius)
         {
-            this.ThreatArea = threatArea;
+            this.Pos = position;
+            this.Radius = radius;
         }
 
         public float getThreat(Node origin, Node dest)

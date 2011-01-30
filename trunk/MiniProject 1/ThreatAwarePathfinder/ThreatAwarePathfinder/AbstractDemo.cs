@@ -24,7 +24,16 @@ namespace ThreatAwarePathfinder {
         private const int WIDTH = 1024;
         private const int HEIGHT = 1024 / 2;
 
+        private List<Agent> threats;
+        private List<Agent> allies;
         private Node[,] nodeArray;
+
+        private Texture2D threatTex;
+        private Texture2D allyTex;
+        private Vector2 agentTexOrigin;
+
+        private Texture2D influenceTex;
+        private Vector2 influenceTexOrigin;
 
         private Texture2D nodeTex;
         private Vector2 nodeTexOrigin;
@@ -102,8 +111,16 @@ namespace ThreatAwarePathfinder {
                 }
             }
 
-            //Search!
+            //Create agents.
+            this.threats = new List<Agent>();
+            this.allies = new List<Agent>();
+
+            Agent threat = new Agent(new Vector2(AbstractDemo.WIDTH / 2f, AbstractDemo.HEIGHT / 2f), 128);
+            this.threats.Add(threat);
+
+            //Create search engine.
             this.pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
+            this.pather.Enemies = this.threats;
 
             base.Initialize();
         }
@@ -121,6 +138,13 @@ namespace ThreatAwarePathfinder {
             this.nodeTexOrigin = new Vector2(nodeTex.Width / 2f, nodeTex.Height / 2f);
 
             this.nodeScale = (this.delta / 2) / this.nodeTex.Width;
+
+            this.threatTex = Content.Load<Texture2D>("threat");
+            this.allyTex = Content.Load<Texture2D>("ally");
+            this.agentTexOrigin = new Vector2(allyTex.Width / 2f, allyTex.Height / 2f);
+
+            this.influenceTex = Content.Load<Texture2D>("influence");
+            this.influenceTexOrigin = new Vector2(influenceTex.Width / 2f, influenceTex.Height / 2f);
         }
 
         /// <summary>
@@ -170,6 +194,15 @@ namespace ThreatAwarePathfinder {
 
             Color std = Color.Blue;
             Color dts = Color.Green;
+            Color threat = Color.Orange;
+
+            foreach (Agent agent in this.threats) {
+                Color c = new Color(threat, 0.5f);
+                float scale = agent.Radius / (this.influenceTex.Width / 2f);
+
+                spriteBatch.Draw(this.threatTex, agent.Pos, null, threat, 0f, this.agentTexOrigin, 1f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(this.influenceTex, agent.Pos, null, c, 0f, this.influenceTexOrigin, scale, SpriteEffects.None, 0f);
+            }
 
             foreach (Node node in this.pather.stdSoFar) {
                 Color c = new Color(std, 0.8f);
