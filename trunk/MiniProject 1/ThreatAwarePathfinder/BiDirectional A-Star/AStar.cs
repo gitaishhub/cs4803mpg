@@ -69,7 +69,13 @@ namespace BiDirectional_A_Star
                     neighbor.CameFrom.Add(path, best);
                 }
 
-                if (neighbor.G == null || g < neighbor.G)
+                bool bad = false;
+                if (best.CameFrom.ContainsKey(path))
+                {
+                    bad = best.CameFrom[path].Equals(neighbor);
+                }
+
+                if (!bad && (neighbor.G == null || g < neighbor.G))
                 {
                     neighbor.CameFrom[path] = best;
                     neighbor.G = g;

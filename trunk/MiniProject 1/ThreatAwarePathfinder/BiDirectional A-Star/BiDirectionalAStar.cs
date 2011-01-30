@@ -72,62 +72,51 @@ namespace BiDirectional_A_Star
                 dtsFrontier = destToStart.FrontierNodes;
             }
 
-            foreach (Node n in startToDest.FrontierNodes) {
-                if (destToStart.FrontierNodes.Contains(n))
-                {
-                    expandedNode = n;
-                    break;
-                }
+            List<Node> stdFrom = new List<Node>();
+            if (expandedNode.CameFrom.ContainsKey("std")) {
+                stdFrom = getCameFrom(expandedNode.CameFrom["std"], "std");
+                stdSoFar = stdFrom;
+            }
+            List<Node> dtsFrom = new List<Node>();
+            if (expandedNode.CameFrom.ContainsKey("dts")) {
+                dtsFrom = getCameFrom(expandedNode.CameFrom["dts"], "dts");
+                dtsSoFar = dtsFrom;
             }
 
             List<Node> soFar = new List<Node>();
-            int count = 0;
-            foreach (Node cameFrom in expandedNode.CameFrom.Values)
-            {
-                if (count == 0)
-                {
-                    soFar.Add(expandedNode);
-                    soFar.AddRange(getCameFrom(cameFrom, count));
+            soFar.AddRange(stdFrom);
+            soFar.Add(expandedNode);
+            soFar.AddRange(dtsFrom);
 
-                    if (chosen.Equals("std"))
-                    {
-                        stdSoFar = soFar;
-                    }
-                    else
-                    {
-                        dtsSoFar = soFar;
-                    }
-                }
-                else if (count == 1)
-                {
-                    soFar.AddRange(getCameFrom(cameFrom, count));
-                }
-                count++;
-            }
-            if (count > 1)
+            if (expandedNode.CameFrom.Count > 1)
             {
                 answer = soFar;
             }
 
-            // reconstruct path based on frontier nodes from the two AStar objects
             return soFar;
         }
 
-        private List<Node> getCameFrom(Node n, int count)
+        private List<Node> getCameFrom(Node n, string index)
         {
             List<Node> temp = new List<Node>();
-            if (count == 1)
+
+            if (index.Equals("std"))
             {
                 temp.Add(n);
+                if (n.CameFrom.ContainsKey(index))
+                {
+                    temp.AddRange(getCameFrom(n.CameFrom[index], index));
+                }
             }
-            if (n.CameFrom.Count > 0)
+            else if (index.Equals("dts"))
             {
-                temp.AddRange(getCameFrom(n.CameFrom.First().Value, count));
-            }
-            if (count == 0)
-            {
+                if (n.CameFrom.ContainsKey(index))
+                {
+                    temp.AddRange(getCameFrom(n.CameFrom[index], index));
+                }
                 temp.Add(n);
             }
+
             return temp;
         }
 
