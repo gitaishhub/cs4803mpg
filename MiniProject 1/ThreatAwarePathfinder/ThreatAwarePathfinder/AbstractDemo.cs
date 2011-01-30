@@ -22,7 +22,7 @@ namespace ThreatAwarePathfinder {
         SpriteBatch spriteBatch;
 
         private const int WIDTH = 1048;
-        private const int HEIGHT = 768;
+        private const int HEIGHT = 512;
 
         private Node[,] nodeArray;
 
@@ -33,6 +33,8 @@ namespace ThreatAwarePathfinder {
         private float delta = 16;
 
         private List<Node> path;
+        private List<Node> startPath;
+        private List<Node> goalPath;
 
         public AbstractDemo() {
             graphics = new GraphicsDeviceManager(this);
@@ -102,8 +104,8 @@ namespace ThreatAwarePathfinder {
             //Search!
             BiDirectionAStar pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
             this.path = pather.Solve();
-            List<Node> firstHalf = pather.answer0;
-            List<Node> secondHalf = pather.answer1;
+            this.startPath = pather.answer0;
+            this.goalPath = pather.answer1;
             Console.Out.WriteLine("Search complete.");
 
             base.Initialize();
@@ -162,8 +164,14 @@ namespace ThreatAwarePathfinder {
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, Color.White, 0f, this.nodeTexOrigin, this.nodeScale, SpriteEffects.None, 0f);
             }
 
-            foreach (Node node in this.path) {
-                spriteBatch.Draw(this.nodeTex, node.Pos, null, Color.Blue, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
+            foreach (Node node in this.startPath) {
+                Color c = new Color(Color.Blue, 0.5f);
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
+            }
+
+            foreach (Node node in this.goalPath) {
+                Color c = new Color(Color.Green, 0.5f);
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
             spriteBatch.End();
