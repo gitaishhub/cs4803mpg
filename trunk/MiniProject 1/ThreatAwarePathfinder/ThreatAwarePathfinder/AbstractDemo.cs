@@ -33,9 +33,6 @@ namespace ThreatAwarePathfinder {
         private float delta = 16;
 
         private BiDirectionAStar pather;
-        private List<Node> path;
-        private List<Node> startPath;
-        private List<Node> goalPath;
 
         private KeyboardState currKeyboard;
         private KeyboardState lastKeyborad;
@@ -191,6 +188,12 @@ namespace ThreatAwarePathfinder {
 
             foreach (Node node in this.pather.dtsFrontier) {
                 Color c = new Color(dts, 0.8f);
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
+            }
+
+            foreach (Node node in this.pather.answer)
+            {
+                Color c = new Color(Color.Red, 1.0f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 

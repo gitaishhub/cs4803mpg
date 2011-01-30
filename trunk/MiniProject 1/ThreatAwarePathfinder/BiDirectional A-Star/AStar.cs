@@ -43,7 +43,7 @@ namespace BiDirectional_A_Star
             return min;
         }
 
-        public Node Step()
+        public Node Step(string path)
         {
             float min = float.PositiveInfinity;
             Node best = null;
@@ -61,12 +61,18 @@ namespace BiDirectional_A_Star
             visitedNodes.Add(best);
             foreach (Node neighbor in best.Neighbors)
             {
+                float h = AStarHelper.CalcDistByThreat(best, neighbor, Enemies, Allies);
+                float? g = best.G + h;
                 if (!FrontierNodes.Contains(neighbor) && !visitedNodes.Contains(neighbor))
                 {
-                    float h = AStarHelper.CalcDistByThreat(best, neighbor, Enemies, Allies);
-                    neighbor.G = best.G + h;
                     FrontierNodes.Add(neighbor);
-                    neighbor.CameFrom.Add(best);
+                    neighbor.CameFrom.Add(path, best);
+                }
+
+                if (neighbor.G == null || g < neighbor.G)
+                {
+                    neighbor.CameFrom[path] = best;
+                    neighbor.G = g;
                 }
             }
 

@@ -11,12 +11,12 @@ namespace BiDirectional_A_Star
         public float? G { get; set; }
         public Vector2 Pos { get; set; }
         public List<Node> Neighbors { get; private set; }
-        public List<Node> CameFrom { get; private set; }
+        public Dictionary<string, Node> CameFrom { get; private set; }
 
         public Node()
         {
             Neighbors = new List<Node>();
-            CameFrom = new List<Node>();
+            CameFrom = new Dictionary<string, Node>();
             G = null;
         }
 
