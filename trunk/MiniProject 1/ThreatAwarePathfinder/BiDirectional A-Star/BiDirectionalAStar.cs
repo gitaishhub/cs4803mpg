@@ -59,10 +59,18 @@ namespace BiDirectional_A_Star
 
             List<Node> soFar = new List<Node>();
             int count = 0;
+            if (expandedNode.CameFrom.Count > 1)
+            {
+                int test = 1 + 1;
+            }
             foreach (Node cameFrom in expandedNode.CameFrom)
             {
-                count++;
                 soFar.AddRange(getCameFrom(cameFrom, count));
+                if (count == 0)
+                {
+                    soFar.Add(expandedNode);
+                }
+                count++;
             }
             if (count > 1)
             {
@@ -93,7 +101,7 @@ namespace BiDirectional_A_Star
 
         public List<Node> Solve()
         {
-            while (answer != null)
+            while (answer == null)
             {
                 Step();
             }
