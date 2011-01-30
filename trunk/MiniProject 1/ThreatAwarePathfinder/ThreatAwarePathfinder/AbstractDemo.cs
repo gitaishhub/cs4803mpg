@@ -171,17 +171,26 @@ namespace ThreatAwarePathfinder {
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
-            foreach (Node node in this.nodeArray) {
-                spriteBatch.Draw(this.nodeTex, node.Pos, null, Color.White, 0f, this.nodeTexOrigin, this.nodeScale, SpriteEffects.None, 0f);
+            Color std = Color.Blue;
+            Color dts = Color.Green;
+
+            foreach (Node node in this.pather.stdSoFar) {
+                Color c = new Color(std, 0.4f);
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
             foreach (Node node in this.pather.stdFrontier) {
-                Color c = new Color(Color.Blue, 0.8f);
+                Color c = new Color(std, 0.8f);
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
+            }
+
+            foreach (Node node in this.pather.dtsSoFar) {
+                Color c = new Color(dts, 0.4f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
             foreach (Node node in this.pather.dtsFrontier) {
-                Color c = new Color(Color.Green, 0.8f);
+                Color c = new Color(dts, 0.8f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
