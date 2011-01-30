@@ -21,8 +21,8 @@ namespace ThreatAwarePathfinder {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        private const int WIDTH = 1048;
-        private const int HEIGHT = 768;
+        private const int WIDTH = 1024;
+        private const int HEIGHT = 1024 / 2;
 
         private Node[,] nodeArray;
 
@@ -172,22 +172,22 @@ namespace ThreatAwarePathfinder {
             Color dts = Color.Green;
 
             foreach (Node node in this.pather.stdSoFar) {
-                Color c = new Color(std, 0.4f);
-                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
-            }
-
-            foreach (Node node in this.pather.stdFrontier) {
                 Color c = new Color(std, 0.8f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
+            foreach (Node node in this.pather.stdFrontier) {
+                Color c = new Color(std, 0.4f);
+                spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
+            }
+
             foreach (Node node in this.pather.dtsSoFar) {
-                Color c = new Color(dts, 0.4f);
+                Color c = new Color(dts, 0.8f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
             foreach (Node node in this.pather.dtsFrontier) {
-                Color c = new Color(dts, 0.8f);
+                Color c = new Color(dts, 0.4f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
