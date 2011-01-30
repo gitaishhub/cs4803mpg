@@ -34,7 +34,7 @@ namespace BiDirectional_A_Star
         public List<Node> stdSoFar { get; private set; }
         public List<Node> stdFrontier { get; private set; }
         public List<Node> dtsSoFar { get; private set; }
-        public List<Node> dtsFronter { get; private set; }
+        public List<Node> dtsFrontier { get; private set; }
 
         public BiDirectionAStar(Node start, Node dest)
         {
@@ -45,6 +45,8 @@ namespace BiDirectional_A_Star
 
             stdSoFar = new List<Node>();
             dtsSoFar = new List<Node>();
+            stdFrontier = this.startToDest.FrontierNodes;
+            dtsFrontier = this.destToStart.FrontierNodes;
         }
 
         public List<Node> Step()
@@ -55,17 +57,18 @@ namespace BiDirectional_A_Star
             float dtsBest = destToStart.CalcBestDistance();
 
             Node expandedNode = null;
+            String chosen = "";
             if (stdBest <= dtsBest)
             {
+                chosen = "std";
                 expandedNode = startToDest.Step();
-                stdSoFar.Add(expandedNode);
                 stdFrontier = startToDest.FrontierNodes;
             }
             else
             {
+                chosen = "dts";
                 expandedNode = destToStart.Step();
-                dtsSoFar.Add(expandedNode);
-                dtsFronter = destToStart.FrontierNodes;
+                dtsFrontier = destToStart.FrontierNodes;
             }
 
             foreach (Node n in startToDest.FrontierNodes) {
@@ -84,6 +87,15 @@ namespace BiDirectional_A_Star
                 {
                     soFar.Add(expandedNode);
                     soFar.AddRange(getCameFrom(cameFrom, count));
+
+                    if (chosen.Equals("std"))
+                    {
+                        stdSoFar = soFar;
+                    }
+                    else
+                    {
+                        dtsSoFar = soFar;
+                    }
                 }
                 else if (count == 1)
                 {
