@@ -22,7 +22,7 @@ namespace ThreatAwarePathfinder {
         SpriteBatch spriteBatch;
 
         private const int WIDTH = 1048;
-        private const int HEIGHT = 512;
+        private const int HEIGHT = 768;
 
         private Node[,] nodeArray;
 
@@ -104,8 +104,6 @@ namespace ThreatAwarePathfinder {
             //Search!
             BiDirectionAStar pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
             this.path = pather.Solve();
-            this.startPath = pather.answer0;
-            this.goalPath = pather.answer1;
             Console.Out.WriteLine("Search complete.");
 
             base.Initialize();

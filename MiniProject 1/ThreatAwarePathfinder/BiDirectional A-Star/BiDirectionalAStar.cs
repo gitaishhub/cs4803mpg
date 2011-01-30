@@ -31,8 +31,10 @@ namespace BiDirectional_A_Star
         private AStar destToStart;
 
         private List<Node> answer;
-        public List<Node> answer0;
-        public List<Node> answer1;
+        public List<Node> stdSoFar { get; private set; }
+        public List<Node> stdFrontier { get; private set; }
+        public List<Node> dtsSoFar { get; private set; }
+        public List<Node> dtsFronter { get; private set; }
 
         public BiDirectionAStar(Node start, Node dest)
         {
@@ -40,6 +42,9 @@ namespace BiDirectional_A_Star
             this.destNode = dest;
             this.startToDest = new AStar(start, dest);
             this.destToStart = new AStar(dest, start);
+
+            stdSoFar = new List<Node>();
+            dtsSoFar = new List<Node>();
         }
 
         public List<Node> Step()
@@ -53,10 +58,22 @@ namespace BiDirectional_A_Star
             if (stdBest <= dtsBest)
             {
                 expandedNode = startToDest.Step();
+                stdSoFar.Add(expandedNode);
+                stdFrontier = startToDest.FrontierNodes;
             }
             else
             {
                 expandedNode = destToStart.Step();
+                dtsSoFar.Add(expandedNode);
+                dtsFronter = destToStart.FrontierNodes;
+            }
+
+            foreach (Node n in startToDest.FrontierNodes) {
+                if (destToStart.FrontierNodes.Contains(n))
+                {
+                    expandedNode = n;
+                    break;
+                }
             }
 
             List<Node> soFar = new List<Node>();
@@ -65,14 +82,12 @@ namespace BiDirectional_A_Star
             {
                 if (count == 0)
                 {
-                    answer0 = getCameFrom(cameFrom, count);
-                    answer0.Add(expandedNode);
-                    soFar.AddRange(answer0);
+                    soFar.Add(expandedNode);
+                    soFar.AddRange(getCameFrom(cameFrom, count));
                 }
                 else if (count == 1)
                 {
-                    answer1 = getCameFrom(cameFrom, count);
-                    soFar.AddRange(answer1);
+                    soFar.AddRange(getCameFrom(cameFrom, count));
                 }
                 count++;
             }
