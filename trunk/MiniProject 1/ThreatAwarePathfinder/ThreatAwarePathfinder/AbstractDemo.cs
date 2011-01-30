@@ -32,9 +32,13 @@ namespace ThreatAwarePathfinder {
 
         private float delta = 16;
 
+        private BiDirectionAStar pather;
         private List<Node> path;
         private List<Node> startPath;
         private List<Node> goalPath;
+
+        private KeyboardState currKeyboard;
+        private KeyboardState lastKeyborad;
 
         public AbstractDemo() {
             graphics = new GraphicsDeviceManager(this);
@@ -102,9 +106,7 @@ namespace ThreatAwarePathfinder {
             }
 
             //Search!
-            BiDirectionAStar pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
-            this.path = pather.Solve();
-            Console.Out.WriteLine("Search complete.");
+            this.pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
 
             base.Initialize();
         }
@@ -138,14 +140,25 @@ namespace ThreatAwarePathfinder {
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime) {
-            KeyboardState keyboard = Keyboard.GetState();
+            this.currKeyboard = Keyboard.GetState();
 
             // Allows the game to exit
-            if (keyboard.IsKeyDown(Keys.Escape)) this.Exit();
+            if (this.currKeyboard.IsKeyDown(Keys.Escape)) this.Exit();
 
             // TODO: Add your update logic here
-            
+            if (this.currKeyboard.IsKeyDown(Keys.Space) && this.lastKeyborad.IsKeyUp(Keys.Space)) {
+                this.pather.Step();
+            }
+            if (this.currKeyboard.IsKeyDown(Keys.OemPeriod)) {
+                this.pather.Step();
+            }
+            if (this.currKeyboard.IsKeyDown(Keys.Enter) && this.lastKeyborad.IsKeyUp(Keys.Enter)) {
+                this.pather.Solve();
+            }
+
             base.Update(gameTime);
+
+            this.lastKeyborad = this.currKeyboard;
         }
 
         /// <summary>
@@ -162,13 +175,13 @@ namespace ThreatAwarePathfinder {
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, Color.White, 0f, this.nodeTexOrigin, this.nodeScale, SpriteEffects.None, 0f);
             }
 
-            foreach (Node node in this.startPath) {
-                Color c = new Color(Color.Blue, 0.5f);
+            foreach (Node node in this.pather.stdFrontier) {
+                Color c = new Color(Color.Blue, 0.8f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
-            foreach (Node node in this.goalPath) {
-                Color c = new Color(Color.Green, 0.5f);
+            foreach (Node node in this.pather.dtsFrontier) {
+                Color c = new Color(Color.Green, 0.8f);
                 spriteBatch.Draw(this.nodeTex, node.Pos, null, c, 0f, this.nodeTexOrigin, 1.5f * this.nodeScale, SpriteEffects.None, 0f);
             }
 
