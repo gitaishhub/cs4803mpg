@@ -30,7 +30,7 @@ namespace BiDirectional_A_Star
         private AStar startToDest;
         private AStar destToStart;
 
-        private List<Node> answer;
+        public List<Node> answer { get; private set; }
         public List<Node> stdSoFar { get; private set; }
         public List<Node> stdFrontier { get; private set; }
         public List<Node> dtsSoFar { get; private set; }
@@ -43,6 +43,7 @@ namespace BiDirectional_A_Star
             this.startToDest = new AStar(start, dest);
             this.destToStart = new AStar(dest, start);
 
+            answer = new List<Node>();
             stdSoFar = new List<Node>();
             dtsSoFar = new List<Node>();
             stdFrontier = this.startToDest.FrontierNodes;
@@ -51,7 +52,7 @@ namespace BiDirectional_A_Star
 
         public List<Node> Step()
         {
-            if (answer != null) { return answer; }
+            if (answer.Count > 0) { return answer; }
 
             float stdBest = startToDest.CalcBestDistance();
             float dtsBest = destToStart.CalcBestDistance();
@@ -61,13 +62,13 @@ namespace BiDirectional_A_Star
             if (stdBest <= dtsBest)
             {
                 chosen = "std";
-                expandedNode = startToDest.Step();
+                expandedNode = startToDest.Step(chosen);
                 stdFrontier = startToDest.FrontierNodes;
             }
             else
             {
                 chosen = "dts";
-                expandedNode = destToStart.Step();
+                expandedNode = destToStart.Step(chosen);
                 dtsFrontier = destToStart.FrontierNodes;
             }
 
@@ -81,7 +82,7 @@ namespace BiDirectional_A_Star
 
             List<Node> soFar = new List<Node>();
             int count = 0;
-            foreach (Node cameFrom in expandedNode.CameFrom)
+            foreach (Node cameFrom in expandedNode.CameFrom.Values)
             {
                 if (count == 0)
                 {
@@ -121,7 +122,7 @@ namespace BiDirectional_A_Star
             }
             if (n.CameFrom.Count > 0)
             {
-                temp.AddRange(getCameFrom(n.CameFrom[0], count));
+                temp.AddRange(getCameFrom(n.CameFrom.First().Value, count));
             }
             if (count == 0)
             {
@@ -132,7 +133,7 @@ namespace BiDirectional_A_Star
 
         public List<Node> Solve()
         {
-            while (answer == null)
+            while (answer.Count == 0)
             {
                 Step();
             }
