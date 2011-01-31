@@ -61,8 +61,7 @@ namespace BiDirectional_A_Star
             visitedNodes.Add(best);
             foreach (Node neighbor in best.Neighbors)
             {
-                float h = AStarHelper.CalcDistByThreat(best, neighbor, Enemies, Allies);
-                float? g = best.G + h;
+                float? g = best.G + AStarHelper.g(best, neighbor, Enemies, Allies);
                 if (!FrontierNodes.Contains(neighbor) && !visitedNodes.Contains(neighbor))
                 {
                     FrontierNodes.Add(neighbor);

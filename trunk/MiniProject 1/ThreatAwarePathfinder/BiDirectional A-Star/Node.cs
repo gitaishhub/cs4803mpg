@@ -22,7 +22,7 @@ namespace BiDirectional_A_Star
 
         public float h(Node destNode, List<Agent> enemies, List<Agent> allies)
         {
-            return AStarHelper.CalcDistByThreat(this, destNode, enemies, allies);
+            return AStarHelper.h(this, destNode, enemies, allies);
         }
 
         public bool Equals(Node n)
