@@ -26,10 +26,10 @@
 \cite_engine basic
 \use_bibtopic false
 \paperorientation portrait
-\leftmargin 1in
-\topmargin 1in
-\rightmargin 1in
-\bottommargin 1in
+\leftmargin 0.9in
+\topmargin 0.9in
+\rightmargin 0.9in
+\bottommargin 0.9in
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -421,7 +421,23 @@ To visit once again on our inadmissible heuristic, it often branches off
 \end_layout
 
 \begin_layout Standard
-If additional work on this project were undertaken, we would like to observe
+One consistency amongst our tests was that BSTS attempted to go around obstacles
+ before actually meeting them; firing lines through threats did not account
+ for distance from the threat, and a node close to the target would suffer
+ the same threat as one at a distance.
+ Ideally, in the future, the heuristic would also take into account distance
+ from target, lessening the threat and allowing a path to "weave" in between
+ threat targets rather than trying to circle around all threats at once.
+\end_layout
+
+\begin_layout Standard
+Primarily, we learned that a different heuristic can drastically affect
+ a search's exploration.
+ We knew this conceptually before, but the search space differences we witnessed
+ as changes were made to the project were of greater import than expected.
+ Additionally, we found that a greedy algorithm can be used get you 'close
+ enough' results if you're willing to settle for less than perfection.
+ If additional work on this project were undertaken, we would like to observe
  the interactions of threats areas and hard obstacles, particularly when
  we allow obstacles to block the a threat's influence area.
  We would also like to experiment with threat area of multiple geometric
