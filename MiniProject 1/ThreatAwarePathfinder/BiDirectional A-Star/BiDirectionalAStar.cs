@@ -36,6 +36,8 @@ namespace BiDirectional_A_Star
         public List<Node> dtsSoFar { get; private set; }
         public List<Node> dtsFrontier { get; private set; }
 
+        private int counter;
+
         public BiDirectionAStar(Node start, Node dest)
         {
             this.startNode = start;
@@ -48,6 +50,8 @@ namespace BiDirectional_A_Star
             dtsSoFar = new List<Node>();
             stdFrontier = this.startToDest.FrontierNodes;
             dtsFrontier = this.destToStart.FrontierNodes;
+
+            counter = 0;
         }
 
         public List<Node> Step()
@@ -59,7 +63,7 @@ namespace BiDirectional_A_Star
 
             Node expandedNode = null;
             String chosen = "";
-            if (stdBest <= dtsBest)
+            if (counter % 2 == 0/*stdBest <= dtsBest*/)
             {
                 chosen = "std";
                 expandedNode = startToDest.Step(chosen);
@@ -71,6 +75,7 @@ namespace BiDirectional_A_Star
                 expandedNode = destToStart.Step(chosen);
                 dtsFrontier = destToStart.FrontierNodes;
             }
+            counter++;
 
             List<Node> stdFrom = new List<Node>();
             if (expandedNode.CameFrom.ContainsKey("std")) {
