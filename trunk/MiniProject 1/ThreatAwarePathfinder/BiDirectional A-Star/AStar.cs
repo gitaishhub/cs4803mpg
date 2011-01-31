@@ -11,7 +11,7 @@ namespace BiDirectional_A_Star
         private Node destNode;
 
         public List<Node> FrontierNodes { get; set; }
-        private List<Node> visitedNodes;
+        internal List<Node> VisitedNodes { get; set; }
         public List<Agent> Allies { get; set; }
         public List<Agent> Enemies { get; set; }
 
@@ -26,7 +26,7 @@ namespace BiDirectional_A_Star
             this.FrontierNodes.Add(start);
             start.G = 0;
 
-            this.visitedNodes = new List<Node>();
+            this.VisitedNodes = new List<Node>();
         }
 
         public float CalcBestDistance()
@@ -58,11 +58,11 @@ namespace BiDirectional_A_Star
             }
 
             FrontierNodes.Remove(best);
-            visitedNodes.Add(best);
+            VisitedNodes.Add(best);
             foreach (Node neighbor in best.Neighbors)
             {
                 float? g = best.G + AStarHelper.g(best, neighbor, Enemies, Allies);
-                if (!FrontierNodes.Contains(neighbor) && !visitedNodes.Contains(neighbor))
+                if (!FrontierNodes.Contains(neighbor) && !VisitedNodes.Contains(neighbor))
                 {
                     FrontierNodes.Add(neighbor);
                     neighbor.CameFrom.Add(path, best);

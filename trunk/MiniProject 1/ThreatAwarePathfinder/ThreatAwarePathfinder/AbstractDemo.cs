@@ -115,20 +115,28 @@ namespace ThreatAwarePathfinder {
             this.threats = new List<Agent>();
             this.allies = new List<Agent>();
 
-            Agent threat1 = new Agent(new Vector2(2 * AbstractDemo.WIDTH / 4f - 200, 2 * AbstractDemo.HEIGHT / 4f), 96);
+            Agent threat1 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 2f, 1 * AbstractDemo.HEIGHT / 4f), 96);
             Agent threat2 = new Agent(new Vector2(3 * AbstractDemo.WIDTH / 4f, 1 * AbstractDemo.HEIGHT / 4f), 96);
-            Agent threat3 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 4f, 3 * AbstractDemo.HEIGHT / 4f), 96);
-            Agent threat4 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 4f, 1 * AbstractDemo.HEIGHT / 4f), 96);
-            Agent threat5 = new Agent(new Vector2(3 * AbstractDemo.WIDTH / 4f, 3 * AbstractDemo.HEIGHT / 4f), 96);
+            Agent threat3 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 3f, 2 * AbstractDemo.HEIGHT / 3f), 96);
+            Agent threat4 = new Agent(new Vector2(7 * AbstractDemo.WIDTH / 8f, 3 * AbstractDemo.HEIGHT / 4f), 96);
             this.threats.Add(threat1);
             this.threats.Add(threat2);
             this.threats.Add(threat3);
             this.threats.Add(threat4);
-            this.threats.Add(threat5);
+
+            Agent ally1 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 4f, 1 * AbstractDemo.HEIGHT / 2f), 96);
+            Agent ally2 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 3f, 3 * AbstractDemo.HEIGHT / 4f), 96);
+            Agent ally3 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 2f, 3 * AbstractDemo.HEIGHT / 4f), 96);
+            Agent ally4 = new Agent(new Vector2(2 * AbstractDemo.WIDTH / 3f, 1 * AbstractDemo.HEIGHT / 2f), 96);
+            this.allies.Add(ally1);
+            this.allies.Add(ally2);
+            this.allies.Add(ally3);
+            this.allies.Add(ally4);
 
             //Create search engine.
             this.pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
             this.pather.Enemies = this.threats;
+            this.pather.Allies = this.allies;
 
             base.Initialize();
         }
@@ -185,6 +193,8 @@ namespace ThreatAwarePathfinder {
                 this.pather.Solve();
             }
 
+            this.Window.Title = "ThreatAwarePathfinder - Total Nodes: " + this.nodeArray.Length + "  Nodes Explored: " + this.pather.ExploredCount;
+
             base.Update(gameTime);
 
             this.lastKeyborad = this.currKeyboard;
@@ -200,15 +210,24 @@ namespace ThreatAwarePathfinder {
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
-            Color std = Color.Blue;
-            Color dts = Color.Green;
+            Color std = Color.Black;
+            Color dts = Color.White;
             Color threat = Color.Orange;
+            Color ally = Color.Blue;
 
             foreach (Agent agent in this.threats) {
                 Color c = new Color(threat, 0.5f);
                 float scale = agent.Radius / (this.influenceTex.Width / 2f);
 
                 spriteBatch.Draw(this.threatTex, agent.Pos, null, threat, 0f, this.agentTexOrigin, 1f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(this.influenceTex, agent.Pos, null, c, 0f, this.influenceTexOrigin, scale, SpriteEffects.None, 0f);
+            }
+
+            foreach (Agent agent in this.allies) {
+                Color c = new Color(ally, 0.5f);
+                float scale = agent.Radius / (this.influenceTex.Width / 2f);
+
+                spriteBatch.Draw(this.allyTex, agent.Pos, null, ally, 0f, this.agentTexOrigin, 1f, SpriteEffects.None, 0f);
                 spriteBatch.Draw(this.influenceTex, agent.Pos, null, c, 0f, this.influenceTexOrigin, scale, SpriteEffects.None, 0f);
             }
 
