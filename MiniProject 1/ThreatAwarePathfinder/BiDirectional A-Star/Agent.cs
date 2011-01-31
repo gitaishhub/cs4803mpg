@@ -24,7 +24,6 @@ namespace BiDirectional_A_Star
 
         public float getThreat(Node origin, Node dest)
         {
-            Vector3 dir = new Vector3(dest.Pos - origin.Pos, 0);
 
             if (this.ThreatArea.Contains(new Vector3(origin.Pos, 0)) == ContainmentType.Contains)
             {
@@ -32,19 +31,35 @@ namespace BiDirectional_A_Star
             }
             else
             {
-                //Get intersection A.
-                Ray ray1 = new Ray(new Vector3(origin.Pos, 0), dir);
-                float? enter = this.ThreatArea.Intersects(ray1);
-                if (enter == null) return 0;
-                Vector3 intersectionA = ray1.Position + ray1.Direction * (float)enter;
+                Vector2 d = dest.Pos - origin.Pos;
+                Vector2 f = origin.Pos - this.Pos;
 
-                //Get intersection B.
-                Ray ray2 = new Ray(intersectionA + 0.001f * dir, dir);
-                float? exit = this.ThreatArea.Intersects(ray2);
-                if (exit == null) return 0;
-                Vector3 intersectionB = ray2.Position + ray2.Direction * (float)exit;
+                float a = d.X * d.X + d.Y * d.Y;
+                float b = 2 * (f.X * d.X + f.Y * d.Y);
+                float c = f.X * f.X + f.Y * f.Y - Radius * Radius;
 
-                return (intersectionA - intersectionB).Length() / (ThreatArea.Radius * 2.0f);
+                float discr = b * b - 4 * a * c;
+                if (discr < 0) { return 0; }
+
+                discr = (float)Math.Sqrt(discr);
+
+                float t1 = (-b + discr) / (2 * a);
+                float t2 = (-b - discr) / (2 * a);
+
+                Vector2 dir = dest.Pos - origin.Pos;
+
+                Vector2 inter0 = new Vector2();
+                if (t1 >= 0 && t1 <= 1)
+                {
+                    inter0 = origin.Pos + dir * t1;
+                }
+                Vector2 inter1 = new Vector2();
+                if (t2 >= 0 && t2 <= 1)
+                {
+                    inter1 = origin.Pos + dir * t2;
+                }
+
+                return (inter0 - inter1).Length() / (ThreatArea.Radius * 2.0f);
             }
         }
     }
