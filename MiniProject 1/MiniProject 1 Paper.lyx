@@ -435,7 +435,7 @@ Primarily, we learned that a different heuristic can drastically affect
  a search's exploration.
  We knew this conceptually before, but the search space differences we witnessed
  as changes were made to the project were of greater import than expected.
- Additionally, we found that a greedy algorithm can be used get you 'close
+ Additionally, we found that a greedy algorithm can be used to get you 'close
  enough' results if you're willing to settle for less than perfection.
  If additional work on this project were undertaken, we would like to observe
  the interactions of threats areas and hard obstacles, particularly when
