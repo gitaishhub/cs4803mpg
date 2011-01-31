@@ -26,19 +26,26 @@ namespace BiDirectional_A_Star
         {
             Vector3 dir = new Vector3(dest.Pos - origin.Pos, 0);
 
-            //Get intersection A.
-            Ray ray1 = new Ray(new Vector3(origin.Pos, 0), dir);
-            float? enter = this.ThreatArea.Intersects(ray1);
-            if (enter == null) return 0;
-            Vector3 intersectionA = ray1.Position + ray1.Direction * (float)enter;
+            if (this.ThreatArea.Contains(new Vector3(origin.Pos, 0)) == ContainmentType.Contains)
+            {
+                return (this.Pos - origin.Pos).Length() / (ThreatArea.Radius * 2.0f);
+            }
+            else
+            {
+                //Get intersection A.
+                Ray ray1 = new Ray(new Vector3(origin.Pos, 0), dir);
+                float? enter = this.ThreatArea.Intersects(ray1);
+                if (enter == null) return 0;
+                Vector3 intersectionA = ray1.Position + ray1.Direction * (float)enter;
 
-            //Get intersection B.
-            Ray ray2 = new Ray(intersectionA + 0.001f * dir, dir);
-            float? exit = this.ThreatArea.Intersects(ray2);
-            if (exit == null) return 0;
-            Vector3 intersectionB = ray2.Position + ray2.Direction * (float)exit;
+                //Get intersection B.
+                Ray ray2 = new Ray(intersectionA + 0.001f * dir, dir);
+                float? exit = this.ThreatArea.Intersects(ray2);
+                if (exit == null) return 0;
+                Vector3 intersectionB = ray2.Position + ray2.Direction * (float)exit;
 
-            return (intersectionA - intersectionB).Length() / (ThreatArea.Radius * 2.0f);
+                return (intersectionA - intersectionB).Length() / (ThreatArea.Radius * 2.0f);
+            }
         }
     }
 }
