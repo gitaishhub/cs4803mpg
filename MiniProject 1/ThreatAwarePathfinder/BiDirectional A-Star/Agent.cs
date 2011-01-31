@@ -10,11 +10,6 @@ namespace BiDirectional_A_Star
     {
         public Vector2 Pos { get; set; }
         public float Radius { get; set; }
-        public BoundingSphere ThreatArea {
-            get {
-                return new BoundingSphere(new Vector3(this.Pos, 0), this.Radius);
-            }
-        }
 
         public Agent(Vector2 position, float radius)
         {
@@ -52,7 +47,7 @@ namespace BiDirectional_A_Star
                 inter1 = origin.Pos + dir * t2;
             }
 
-            return (inter0 - inter1).Length() / (ThreatArea.Radius * 2.0f);
+            return (inter0 - inter1).Length() / (Radius * 2.0f);
         }
     }
 }
