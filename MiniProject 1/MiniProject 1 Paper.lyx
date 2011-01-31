@@ -1,0 +1,217 @@
+#LyX 1.6.8 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\leftmargin 1in
+\topmargin 1in
+\rightmargin 1in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Tactical Path Planning
+\end_layout
+
+\begin_layout Section
+Problem
+\end_layout
+
+\begin_layout Standard
+Path planning and navigation are critical aspects of most video games.
+ Agents need to be able to traverse their virtual world in order to interact
+ with each other and the player.
+ In general, the problem of pathing has long been solved in games, with
+ A* being the method of choice.
+ However, this merely accomplishes the task of moving about the world without
+ stumbling into walls.
+ More can be done to improve the observed intelligence of game agents.
+ In addition to the passability of the virtual world, agents should also
+ be capable of pathing around threats presented by other game agents within
+ the world.
+ Also, game agents should have the option of pathing closer to designated
+ 
+\begin_inset Quotes eld
+\end_inset
+
+safe
+\begin_inset Quotes erd
+\end_inset
+
+ areas in a map, such as those populated by allies or those that are far
+ removed from threats.
+ With that in mind, this problem also has some relevance to military movements
+ or those done by automated machinery, such as exploratory robots.
+ Military movement and robots such as the Mars rover could potentially benefit
+ from a pathing algorithm that takes into account threats and safe areas.
+\end_layout
+
+\begin_layout Section
+Related Works
+\end_layout
+
+\begin_layout Standard
+From a military perspective, there are many related works to this project.
+ Martin Oxenham and Philip Cutler ad- dress a similar issue in a paper focused
+ on the navigation of aircraft to targets near the presence of prohibited
+ areas [1].
+ While this is similar to the problem at hand, their work is mostly focused
+ on threat elimination rather than avoidance and is quite specific to the
+ ideas of tactical air combat on a curved surface (the Earth).
+\end_layout
+
+\begin_layout Standard
+More directly related to this project is the work of Haiquing Wang et al
+ on the tactical planning of multiple units.
+ Their project is on a much larger scale however, and is mostly interested
+ in multiple agents operating together in more complex interactions such
+ as trapping and escorting [3].
+ The most similar work is an overview of the AI in the game Killzone which
+ covers concepts such as tactical position evaluation for multiple purposes
+ [2].
+ The article details methods for evaluating threats at arbitrary positions
+ and pathing around these threats as well as more advanced techniques specific
+ to the game’s genre.
+\end_layout
+
+\begin_layout Section
+Approach
+\end_layout
+
+\begin_layout Standard
+The algorithm that was implemented was a variation of A* in C#, using XNA
+ for the GUI interface and its object/ray collision detection.
+ Because A* finds the optimal path, it wasn't exactly what we needed, but
+ it provided a good framework to work off of.
+ To explain, the heuristic of A* is defined as f(x) = g(x) + h(x), where
+ g(x) is the cost to get to the node x, and h(x) is the estimated cost to
+ go from x to the goal node.
+ One of the requirements of A* is that h(x) must never overestimate the
+ cost of going from x to the goal node.
+ However, we quickly found that, in order to properly utilize threatening
+ and safe areas, it was necessary that h(x) sometimes overestimate the cost
+ in order to bias the search against a route.
+ If it wasn't, then the algorithm would essentially ignore the bias against
+ threats and towards safe areas and become a slower version of A*.
+\end_layout
+
+\begin_layout Standard
+To bias this quasi-A* algorithm, now dubbed Better Safe Than Sorry (BSTS),
+ we implemented h(x) as a direct-line from node x to the goal node.
+ In addition, it checks with a list of threats and allies to see if any
+ of them affect this direct line and modify its cost.
+ EXPLAIN COST MODIFICATION HERE.
+ Once node x was chosen to be expanded, g(x) is set equal to the cost of
+ getting to its predecessor node plus the directi line cost from the predecessor
+ node to x, using the same algorithm that is used to calculate h(x).
+\end_layout
+
+\begin_layout Section
+Evaluation
+\end_layout
+
+\begin_layout Section
+Discussion
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-1"
+
+\end_inset
+
+M.
+ G.
+ Oxenham and P.
+ Cutler.
+ Accomodating obstacle avoidance in the weapons allocation problem for tactical
+ air defense.
+ In 
+\emph on
+Proc.
+ 9th Int Information Fusion Conf
+\emph default
+, pages 1-8, 2006.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-2"
+
+\end_inset
+
+R.
+ Straatman, W.
+ van der Sterren, and A.
+ Beij.
+ Killzone's ai: dynamic procedural combat tactics.
+ In 
+\emph on
+Game Developer's Conference.
+
+\emph default
+ Citeseer, 2005.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-3"
+
+\end_inset
+
+Haiqing Wang, O.
+ N.
+ Malik, and A.
+ Nareyek.
+ Multi-unit tactical pathplanning.
+ In 
+\emph on
+Proc.
+ IEEE Symp.
+ Computation Intelligence and Games CIG 2009
+\emph default
+, pages 349-354, 2009.
+\end_layout
+
+\end_body
+\end_document
