@@ -115,8 +115,8 @@ namespace ThreatAwarePathfinder {
             this.threats = new List<Agent>();
             this.allies = new List<Agent>();
 
-            Agent threat1 = new Agent(new Vector2(AbstractDemo.WIDTH / 2f, 3 * AbstractDemo.HEIGHT / 4f), 64);
-            Agent threat2 = new Agent(new Vector2(AbstractDemo.WIDTH / 2f, 1 * AbstractDemo.HEIGHT / 4f), 64);
+            Agent threat1 = new Agent(new Vector2(1 * AbstractDemo.WIDTH / 4f, 3 * AbstractDemo.HEIGHT / 4f), 64);
+            Agent threat2 = new Agent(new Vector2(3 * AbstractDemo.WIDTH / 4f, 1 * AbstractDemo.HEIGHT / 4f), 64);
             this.threats.Add(threat1);
             this.threats.Add(threat2);
 
