@@ -115,8 +115,10 @@ namespace ThreatAwarePathfinder {
             this.threats = new List<Agent>();
             this.allies = new List<Agent>();
 
-            Agent threat = new Agent(new Vector2(AbstractDemo.WIDTH / 2f, AbstractDemo.HEIGHT / 2f), 128);
-            this.threats.Add(threat);
+            Agent threat1 = new Agent(new Vector2(AbstractDemo.WIDTH / 2f, 3 * AbstractDemo.HEIGHT / 4f), 64);
+            Agent threat2 = new Agent(new Vector2(AbstractDemo.WIDTH / 2f, 1 * AbstractDemo.HEIGHT / 4f), 64);
+            this.threats.Add(threat1);
+            this.threats.Add(threat2);
 
             //Create search engine.
             this.pather = new BiDirectionAStar(this.nodeArray[0, 0], this.nodeArray[nodeWidth - 1, nodeHeight - 1]);
