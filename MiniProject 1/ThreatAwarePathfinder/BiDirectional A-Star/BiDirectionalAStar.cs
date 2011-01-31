@@ -36,6 +36,12 @@ namespace BiDirectional_A_Star
         public List<Node> dtsSoFar { get; private set; }
         public List<Node> dtsFrontier { get; private set; }
 
+        public int ExploredCount {
+            get {
+                return this.startToDest.VisitedNodes.Count + this.destToStart.VisitedNodes.Count;
+            }
+        }
+
         private int counter;
 
         public BiDirectionAStar(Node start, Node dest)

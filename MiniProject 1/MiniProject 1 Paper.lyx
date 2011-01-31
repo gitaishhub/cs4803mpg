@@ -116,39 +116,642 @@ Approach
 \end_layout
 
 \begin_layout Standard
-The algorithm that was implemented was a variation of A* in C#, using XNA
- for the GUI interface and its object/ray collision detection.
- Because A* finds the optimal path, it wasn't exactly what we needed, but
- it provided a good framework to work off of.
- To explain, the heuristic of A* is defined as f(x) = g(x) + h(x), where
- g(x) is the cost to get to the node x, and h(x) is the estimated cost to
- go from x to the goal node.
+For this project, we implemented a variation of Bidirectional A* in C#,
+ using XNA for the GUI interface and its object/ray collision detection.
+ Because A* finds the optimal path, it wasn't exactly what we needed.
+ An optimal path in an environment filled with threats would essentially
+ treat them as impassable obstacles.
+ We wanted more leeway in the path, allowing an agent to pass trade increased
+ threat for decreased distance.
+ However, A* did provide a good starting framework.
+\end_layout
+
+\begin_layout Standard
+To explain, the heuristic of A* is defined as f(x) = g(x) + h(x), where
+ g(x) is the cost to travel to the node x, and h(x) is the estimated cost
+ to go from x to the goal.
  One of the requirements of A* is that h(x) must never overestimate the
  cost of going from x to the goal node.
  However, we quickly found that, in order to properly utilize threatening
  and safe areas, it was necessary that h(x) sometimes overestimate the cost
  in order to bias the search against a route.
- If it wasn't, then the algorithm would essentially ignore the bias against
- threats and towards safe areas and become a slower version of A*.
+ If it didn't, the algorithm would, in some cases, ignore the bias against
+ threats and towards safe areas.
+ More importantly though, without this change, A* would expand many more
+ nodes than it would in an environment without threats..
 \end_layout
 
 \begin_layout Standard
 To bias this quasi-A* algorithm, now dubbed Better Safe Than Sorry (BSTS),
  we implemented h(x) as a direct-line from node x to the goal node.
- In addition, it checks with a list of threats and allies to see if any
- of them affect this direct line and modify its cost.
- EXPLAIN COST MODIFICATION HERE.
- Once node x was chosen to be expanded, g(x) is set equal to the cost of
- getting to its predecessor node plus the directi line cost from the predecessor
- node to x, using the same algorithm that is used to calculate h(x).
+ This line is then intersected against a list of of threats and allies to
+ see if any of them lie along the line and modify its cost.
+ Each threatening and safe area intersected yeilds a straight-line distance
+ measuring the amount of threat along the path.
+ These distances are subtracted from the path's Euclidean distance, and
+ then divided by a constant 
+\emph on
+c
+\begin_inset Formula $_{1}$
+\end_inset
+
+
+\emph default
+.
+ The distance travelled through threatening areas is then multiplied by
+ a second constant 
+\emph on
+c
+\begin_inset Formula $_{2}$
+\end_inset
+
+
+\emph default
+and added back into the running total.
+ Summed together, 
+\emph on
+c
+\begin_inset Formula $_{1}$
+\end_inset
+
+
+\emph default
+ and 
+\emph on
+c
+\begin_inset Formula $_{2}$
+\end_inset
+
+
+\emph default
+ equal 1.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $h(x,goal)=[dist(x,goal)-threatDist(x,goal)-safeDist(x,goal)]*c_{1}+threatDist(x,goal)*c_{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Once node 
+\emph on
+x
+\emph default
+ was chosen to be expanded, g(x) is calculated as the cost of getting to
+ from the origin node to predecessor node of 
+\emph on
+x
+\emph default
+, called 
+\emph on
+y
+\emph default
+, plus the direct line cost from 
+\emph on
+x
+\emph default
+ to 
+\emph on
+y
+\emph default
+, using the same algorithm that is used to calculate h(x).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $g(x)=g(y)+h(x,y)$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
 Evaluation
 \end_layout
 
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename fig1.bmp
+	lyxscale 25
+	width 50col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+One threat and one ally.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset space \hfill{}
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename fig2.bmp
+	lyxscale 25
+	width 50col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Four threats and four allies.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Example environments and searches across them.
+ Pluses indicate allies while minuses indicate threats.
+ Dark grey nodes are the final frontier of the forward A*, while light grey
+ nodes are the frontier of the reverse A*.
+ The red path denotes the returned path.
+\begin_inset CommandInset label
+LatexCommand label
+name "ExampleEnvironments"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+Firstly, due to the alterations made to the A* algorithm, the paths retuned
+ by the search were not guaranteed to be optimal.
+ This manifested as inconsistent, sub-optimal segments in usually localized
+ parts of the return path.
+ However, the cost calculations allow trading distance for threat and vice
+ versa, so a path segment that traverses a threat is not automatically a
+ bad segment.
+ We occasionally found it difficult to eyeball the effectiveness of our
+ algorithm as a result and would have to alter the environment and generate
+ slightly different paths to determine how it behaved.
+\end_layout
+
+\begin_layout Standard
+The more blatant sub-optimality present in the paths is a result of our
+ non-admissible BSTS heurisitic.
+ When ran using an admissible heuristic, the search operated as one would
+ expect - including a drastic increase in node expansion.
+ Bidirectional A* using only Euclidean distance as a heuristic quite often
+ explored half the environment as it tried to find routes around the threats.
+ As one of our intial objectives was to minimize the run-time of our search,
+ expanding half the graph was unacceptable.
+ As Tables 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "SingleAgentNodeTable"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "QuadAgentNodeTable"
+
+\end_inset
+
+ show, the tradeoff on optimality generated substantial savings on node
+ exploration.
+ Table 2 also demonstrates the cost volatility that can sometimes occur
+ when many agents are present in nearby vicinity.
+ It was a particularly bad case, where the path woud jump between two options
+ based on the resolution of the discretized space.
+\end_layout
+
+\begin_layout Standard
+Even with our trade-off, the paths returned by the search are usable.
+ Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "ExampleEnvironments"
+
+\end_inset
+
+ contains captures of some example searches.
+ They are reasonably good paths, and the values for the constants in the
+ BSTS heuristic can be adjusted to prefer more or less exposure to threats.
+\end_layout
+
 \begin_layout Section
 Discussion
+\end_layout
+
+\begin_layout Standard
+Some of the minor inconsistencies in the paths were caused by artifacts
+ left over from two separate searches in the Bidirectional A*.
+ Sub-optimal bumps in the path are sometimes present where the two paths
+ meet and are subsequently joined.
+ These could have been removed with a more robust search tree intersection
+ algorithm, but as the intricacies of Bidirectional search were not the
+ primary focus of the project, we settled for a fast, dirty solution.
+\end_layout
+
+\begin_layout Standard
+To visit once again on our inadmissible heuristic, it often branches off
+ from the returned path as it attempts to fire rays that minimize (or maximize)
+ the intersected chord lengths with threats (or allies).
+ While this leads to sections of the graph that are explored and then abandoned,
+ it still gave us cheaper results than an admissible heuristic.
+ This is particularly applicable to video game agents, as there may be many
+ path requests and a player will notice if an agent stands around while
+ waiting for a path return.
+ The node expansion percentages, in general, seemed to be fairly constant
+ as the resolution of the discretized space increased.
+ Table 1 demonstrates this nicely, and is the general case witnessed when
+ testing various configurations.
+ This means that the expansion costs of the algorithm are linear, based
+ on the number of nodes in the space.
+ We were unable to determine the effects of agent count on expansion costs,
+ as it very much depended on the arrangement of the threats.
+\end_layout
+
+\begin_layout Standard
+If additional work on this project were undertaken, we would like to observe
+ the interactions of threats areas and hard obstacles, particularly when
+ we allow obstacles to block the a threat's influence area.
+ We would also like to experiment with threat area of multiple geometric
+ shapes in the same space.
+ Improvements could still be made on speed, perhaps using a hierarchical
+ search.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="3">
+<features>
+<column alignment="center" valignment="top" width="33col%">
+<column alignment="center" valignment="top" width="33col%">
+<column alignment="center" valignment="top" width="33col%">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Nodes Explored
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Total Nodes
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Percentage Explored
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+100
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+512
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.5%
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+404
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2048
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.7%
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1758
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8192
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+21.5%
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Node exploration with a single threat and ally (two total agents).
+\begin_inset CommandInset label
+LatexCommand label
+name "SingleAgentNodeTable"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="4" columns="3">
+<features>
+<column alignment="center" valignment="top" width="33col%">
+<column alignment="center" valignment="top" width="33col%">
+<column alignment="center" valignment="top" width="33col%">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Nodes Explored
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Total Nodes
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Percentage Explored
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+62
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+512
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12.1%
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+357
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2048
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+17.4%
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1600
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8192
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19.5%
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Node exploration with four threats and allies (eight total agents).
+\begin_inset CommandInset label
+LatexCommand label
+name "QuadAgentNodeTable"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Bibliography
