@@ -22,37 +22,21 @@ namespace BiDirectional_A_Star
         {
             float d = AStarHelper.Dist(origNode, destNode);
 
-            List<float> penalties = new List<float>();
+            float penaltyDist = 0f;
             foreach (Agent e in enemies)
             {
-                float p = e.getThreat(origNode, destNode);
-                if (p > 0) { penalties.Add(p); }
-            }
-            float penalty = 0;
-            if (penalties.Count > 0)
-            {
-                penalty = penalties.Max() * 0.4f;
+                penaltyDist += e.getThreat(origNode, destNode) * (e.Radius * 2);
             }
 
-            List<float> bonuses = new List<float>();
+            float bonusDist = 0f;
             foreach (Agent a in allies)
             {
-                float b = a.getThreat(origNode, destNode);
-                if (b > 0) { bonuses.Add(b); }
-            }
-            float bonus = 0;
-            if (bonuses.Count > 0)
-            {
-                bonus = bonuses.Max() * 0.4f;
+                bonusDist += a.getThreat(origNode, destNode) * (a.Radius * 2);
             }
 
-            float c1 = 1f;
-            float c2 = 2f;
-            // quick-n-dirty: circles have a diam of 128 and Sum() gives the number of circle-parts
-            return (d - penalties.Sum() * 128 - bonuses.Sum() * 128) / c1 + c2 * penalties.Sum() * 128;
-
-            // figure it out
-            //return Math.Max(0, 0.6f * d - bonus * d + penalty * d);
+            float c1 = 0.1f;
+            float c2 = 0.9f;
+            return (d - penaltyDist - bonusDist) * c1 + c2 * penaltyDist;
         }
     }
 }
