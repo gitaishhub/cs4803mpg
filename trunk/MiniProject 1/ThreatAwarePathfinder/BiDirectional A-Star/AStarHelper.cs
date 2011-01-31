@@ -46,8 +46,13 @@ namespace BiDirectional_A_Star
                 bonus = bonuses.Max() * 0.4f;
             }
 
+            float c1 = 1f;
+            float c2 = 2f;
+            // quick-n-dirty: circles have a diam of 128 and Sum() gives the number of circle-parts
+            return (d - penalties.Sum() * 128 - bonuses.Sum() * 128) / c1 + c2 * penalties.Sum() * 128;
+
             // figure it out
-            return Math.Max(0, 0.6f * d - bonus * d + penalty * d);
+            //return Math.Max(0, 0.6f * d - bonus * d + penalty * d);
         }
     }
 }
